@@ -1,0 +1,15 @@
+{
+    "goals": [
+        "Create an order for customer cust_a with a single line item and read it back to confirm all fields",
+        "Post a new invoice for customer cust_a and then retrieve it to confirm it was stored correctly",
+        "Retrieve the end-of-month expense summary for customer cust_a for February 2026"
+    ],
+    "apiBaseUrl": "http://localhost:4011",
+    "authHeader": {
+        "x-api-key": "legacy-test-key"
+    },
+    "apiVersion": "v1.1",
+    "customerId": "cust_a",
+    "docPath": "../legacy-api/API Documentation.md",
+    "openApiPath": "../legacy-api/openapi.yaml"
+}
