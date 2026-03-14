@@ -1,0 +1,24 @@
+{
+    "name": "api-probe-legacy-fixture",
+    "version": "0.1.0",
+    "private": true,
+    "description": "Phase 1 legacy API fixture with accurate documentation",
+    "main": "dist/server.js",
+    "scripts": {
+        "build": "tsc -p tsconfig.json",
+        "start": "node dist/server.js",
+        "dev": "tsx legacy-api/src/server.ts"
+    },
+    "engines": {
+        "node": ">=20"
+    },
+    "dependencies": {
+        "express": "^4.21.2"
+    },
+    "devDependencies": {
+        "@types/express": "^5.0.1",
+        "@types/node": "^22.13.10",
+        "tsx": "^4.19.3",
+        "typescript": "^5.8.2"
+    }
+}
