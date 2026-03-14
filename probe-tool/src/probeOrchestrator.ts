@@ -18,6 +18,7 @@ IMPORTANT RULES:
 - Many legacy APIs have incorrect or outdated documentation. Method names and parameter names may be wrong.
 - If a write operation is needed, always add a final read-back step to verify the write succeeded.
 - Path templates use {{varName}} tokens. Use extractVariables to capture response data for subsequent steps.
+- When creating mutable resources like orders or invoices, prefer unique IDs that include {{runId}} so repeated probe runs do not collide with earlier test data.
 - Prefer the minimal working set of steps. Do not invent endpoints that are not in the docs.
 - When uncertain about a field name (e.g. commodity_id vs commodity_code_id), pick the most likely one and note the alternative in fallbackNote.
 
@@ -65,6 +66,7 @@ ${input.apiDocumentation}
 Customer ID: ${input.customerId}
 API Version: ${input.apiVersion}
 API Base URL: ${input.apiBaseUrl}
+Available substitution vars: customerId={{customerId}}, apiVersion={{apiVersion}}, runId={{runId}}
 
 Goal to achieve:
 ID: ${goal.id}
@@ -103,6 +105,7 @@ ${input.apiDocumentation}
 Customer ID: ${input.customerId}
 API Version: ${input.apiVersion}
 API Base URL: ${input.apiBaseUrl}
+Available substitution vars: customerId={{customerId}}, apiVersion={{apiVersion}}, runId={{runId}}
 
 Goal to achieve:
 ID: ${goal.id}
@@ -130,6 +133,7 @@ export async function probeGoal(
     input: GoalInput,
     maxAttempts?: number
 ): Promise<AttemptTrace[]> {
+    const runId = `${Date.now().toString(36)}_${goal.id}`;
     const limit =
         maxAttempts ??
         (process.env.MAX_PROBE_ATTEMPTS
@@ -139,6 +143,7 @@ export async function probeGoal(
     const initialContext: Record<string, unknown> = {
         customerId: input.customerId,
         apiVersion: input.apiVersion,
+        runId,
     };
 
     const allAttempts: AttemptTrace[] = [];

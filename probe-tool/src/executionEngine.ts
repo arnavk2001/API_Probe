@@ -106,15 +106,19 @@ async function executeStep(
 
     // Prepare body
     const requestBody =
-        step.body !== undefined
+        step.body !== undefined && step.body !== null
             ? interpolateBody(step.body, variableContext)
             : undefined;
+
+    const allowsRequestBody = step.method !== "GET" && step.method !== "DELETE";
 
     const fetchOptions: RequestInit = {
         method: step.method,
         headers,
         body:
-            requestBody !== undefined ? JSON.stringify(requestBody) : undefined,
+            allowsRequestBody && requestBody !== undefined
+                ? JSON.stringify(requestBody)
+                : undefined,
     };
 
     const requestSnapshot = {

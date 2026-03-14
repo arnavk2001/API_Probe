@@ -32,6 +32,12 @@ type InvoiceRecord = {
   notes?: string;
 };
 
+type OrderLineItemInput = {
+  sku: string;
+  quantity: number;
+  unit_price: number;
+};
+
 const app = express();
 const PORT = Number(process.env.PORT ?? 4011);
 const API_KEY = process.env.LEGACY_API_KEY ?? "legacy-test-key";
@@ -185,6 +191,7 @@ app.put("/api/:version/orders/:orderId", (req: Request, res: Response) => {
   const now = new Date().toISOString();
   const existing = store.get(orderId);
   const currency = readRequiredString(body.currency) ?? "USD";
+  const normalizedLineItems = normalizeLineItems(lineItems);
 
   const order: OrderRecord = {
     orderId,
@@ -192,7 +199,7 @@ app.put("/api/:version/orders/:orderId", (req: Request, res: Response) => {
     pickupDate,
     commodityId,
     currency,
-    lineItems,
+    lineItems: normalizedLineItems,
     createdAt: existing?.createdAt ?? now,
     updatedAt: now
   };
@@ -358,7 +365,7 @@ function invalidVersion(res: Response): Response {
   });
 }
 
-function isValidLineItems(value: unknown): value is Array<{ sku: string; quantity: number; unitPrice: number }> {
+function isValidLineItems(value: unknown): value is OrderLineItemInput[] {
   if (!Array.isArray(value) || value.length === 0) {
     return false;
   }
@@ -378,6 +385,14 @@ function isValidLineItems(value: unknown): value is Array<{ sku: string; quantit
       row.unit_price >= 0
     );
   });
+}
+
+function normalizeLineItems(value: OrderLineItemInput[]): OrderRecord["lineItems"] {
+  return value.map((item) => ({
+    sku: item.sku,
+    quantity: item.quantity,
+    unitPrice: item.unit_price
+  }));
 }
 
 function toOrderResponse(order: OrderRecord, version: ApiVersion): Record<string, unknown> {
