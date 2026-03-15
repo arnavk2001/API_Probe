@@ -7,7 +7,8 @@
     "scripts": {
         "build": "tsc -p tsconfig.json",
         "start": "node dist/server.js",
-        "dev": "tsx legacy-api/src/server.ts"
+        "dev": "tsx legacy-api/src/server.ts",
+        "dev:server2": "tsx legacy-api/src/server2.ts"
     },
     "engines": {
         "node": ">=20"
