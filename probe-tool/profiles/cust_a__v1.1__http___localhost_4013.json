@@ -1,7 +1,7 @@
 {
   "profileId": "cust_a__v1.1__http://localhost:4013",
-  "createdAt": "2026-03-15T03:06:21.826Z",
-  "updatedAt": "2026-03-15T03:06:21.826Z",
+  "createdAt": "2026-03-15T03:20:57.768Z",
+  "updatedAt": "2026-03-15T03:20:57.768Z",
   "apiBaseUrl": "http://localhost:4013",
   "apiVersion": "v1.1",
   "customerId": "cust_a",
@@ -45,7 +45,8 @@
       "prerequisitePaths": [
         "/api/v1.1/orders/preflight",
         "/api/v1.1/orders/template",
-        "/api/v1.1/orders/{{runId}}-order"
+        "/api/v1.1/orders/{{createdOrderId}}",
+        "/api/v1.1/orders/{{runId}}-order-{{randomInt}}"
       ],
       "confidence": 0.8999999999999999
     },
@@ -54,7 +55,7 @@
       "goalId": "goal_1",
       "goalText": "Create an order for customer cust_a with a single line item and read it back to confirm all fields",
       "method": "POST",
-      "path": "/api/v1.1/orders/{{runId}}-order",
+      "path": "/api/v1.1/orders/{{runId}}-order-{{randomInt}}",
       "successStatusCodes": [
         201
       ],
@@ -74,7 +75,8 @@
       "prerequisitePaths": [
         "/api/v1.1/orders/preflight",
         "/api/v1.1/orders/template",
-        "/api/v1.1/orders/{{runId}}-order"
+        "/api/v1.1/orders/{{createdOrderId}}",
+        "/api/v1.1/orders/{{runId}}-order-{{randomInt}}"
       ],
       "confidence": 0.8999999999999999
     },
@@ -83,7 +85,7 @@
       "goalId": "goal_2",
       "goalText": "Post a new invoice for customer cust_a and then retrieve it to confirm it was stored correctly",
       "method": "PUT",
-      "path": "/api/{{apiVersion}}/invoices",
+      "path": "/api/v1.1/invoices",
       "successStatusCodes": [
         201
       ],
@@ -99,6 +101,26 @@
         "total"
       ],
       "prerequisitePaths": [],
+      "confidence": 0.8999999999999999
+    },
+    {
+      "capabilityId": "goal_2_step_2",
+      "goalId": "goal_2",
+      "goalText": "Post a new invoice for customer cust_a and then retrieve it to confirm it was stored correctly",
+      "method": "GET",
+      "path": "/api/v1.1/invoices/{{createdInvoiceId}}",
+      "successStatusCodes": [
+        200
+      ],
+      "requiredHeaders": [
+        "x-api-key"
+      ],
+      "requiredQueryParams": [],
+      "requiredBodyFields": [],
+      "prerequisitePaths": [
+        "/api/v1.1/invoices",
+        "/api/v1.1/invoices/{{createdInvoiceId}}"
+      ],
       "confidence": 0.8999999999999999
     },
     {

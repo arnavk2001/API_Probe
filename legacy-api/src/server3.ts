@@ -3,39 +3,39 @@ import express, { Request, Response } from "express";
 type ApiVersion = "v1.1" | "v1.2";
 
 type PreflightRecord = {
-  preflightToken: string;
-  customerId: string;
-  expiresAtMs: number;
+    preflightToken: string;
+    customerId: string;
+    expiresAtMs: number;
 };
 
 type OrderRecord = {
-  orderId: string;
-  customerId: string;
-  pickupDate: string;
-  commodityId: string;
-  currency: string;
-  lineItems: Array<{
-    sku: string;
-    quantity: number;
-    unitPrice: number;
-  }>;
-  createdAt: string;
-  updatedAt: string;
+    orderId: string;
+    customerId: string;
+    pickupDate: string;
+    commodityId: string;
+    currency: string;
+    lineItems: Array<{
+        sku: string;
+        quantity: number;
+        unitPrice: number;
+    }>;
+    createdAt: string;
+    updatedAt: string;
 };
 
 type InvoiceRecord = {
-  invoiceId: string;
-  customerId: string;
-  total: number;
-  currency: string;
-  issuedAt: string;
-  notes?: string;
+    invoiceId: string;
+    customerId: string;
+    total: number;
+    currency: string;
+    issuedAt: string;
+    notes?: string;
 };
 
 type OrderLineItemInput = {
-  sku: string;
-  qty: number;
-  unit_price: number;
+    sku: string;
+    qty: number;
+    unit_price: number;
 };
 
 const app = express();
@@ -45,12 +45,12 @@ const PREFLIGHT_TTL_MS = 3 * 60 * 1000;
 
 const preflightTokens = new Map<string, PreflightRecord>();
 const ordersByVersion: Record<ApiVersion, Map<string, OrderRecord>> = {
-  "v1.1": new Map<string, OrderRecord>(),
-  "v1.2": new Map<string, OrderRecord>()
+    "v1.1": new Map<string, OrderRecord>(),
+    "v1.2": new Map<string, OrderRecord>()
 };
 const invoicesByVersion: Record<ApiVersion, Map<string, InvoiceRecord>> = {
-  "v1.1": new Map<string, InvoiceRecord>(),
-  "v1.2": new Map<string, InvoiceRecord>()
+    "v1.1": new Map<string, InvoiceRecord>(),
+    "v1.2": new Map<string, InvoiceRecord>()
 };
 
 seedInvoices();
@@ -58,582 +58,582 @@ seedInvoices();
 app.use(express.json());
 
 app.get("/health", (_req: Request, res: Response) => {
-  return sendXml(res, 200, { status: "ok", fixture: "server3" }, "health");
+    return sendXml(res, 200, { status: "ok", fixture: "server3" }, "health");
 });
 
 app.use((req: Request, res: Response, next) => {
-  const key = req.header("x-api-key");
-  if (key !== API_KEY) {
-    return sendXml(
-      res,
-      401,
-      {
-        error: "unauthorized",
-        message: "Missing or invalid x-api-key"
-      },
-      "error"
-    );
-  }
-  return next();
+    const key = req.header("x-api-key");
+    if (key !== API_KEY) {
+        return sendXml(
+            res,
+            401,
+            {
+                error: "unauthorized",
+                message: "Missing or invalid x-api-key"
+            },
+            "error"
+        );
+    }
+    return next();
 });
 
 app.get("/api/:version/system/info", (req: Request, res: Response) => {
-  const version = parseVersion(req.params.version);
-  if (!version) {
-    return invalidVersion(res);
-  }
+    const version = parseVersion(req.params.version);
+    if (!version) {
+        return invalidVersion(res);
+    }
 
-  return sendXml(
-    res,
-    200,
-    {
-      system: "Legacy Freight Suite",
-      installation: "customer-variant-server3-xml",
-      version,
-      auth: { header: "x-api-key" },
-      notes: "This installation uses XML responses and undocumented behavior drift."
-    },
-    "system"
-  );
+    return sendXml(
+        res,
+        200,
+        {
+            system: "Legacy Freight Suite",
+            installation: "customer-variant-server3-xml",
+            version,
+            auth: { header: "x-api-key" },
+            notes: "This installation uses XML responses and undocumented behavior drift."
+        },
+        "system"
+    );
 });
 
 app.post("/api/:version/orders/preflight", (req: Request, res: Response) => {
-  const version = parseVersion(req.params.version);
-  if (!version) {
-    return invalidVersion(res);
-  }
+    const version = parseVersion(req.params.version);
+    if (!version) {
+        return invalidVersion(res);
+    }
 
-  const body = req.body as Record<string, unknown>;
-  const customerId = readRequiredString(body.customer_id) ?? readRequiredString(body.client_id);
-  if (!customerId) {
+    const body = req.body as Record<string, unknown>;
+    const customerId = readRequiredString(body.customer_id) ?? readRequiredString(body.client_id);
+    if (!customerId) {
+        return sendXml(
+            res,
+            400,
+            {
+                error: "validation_error",
+                message: "customer_id is required"
+            },
+            "error"
+        );
+    }
+
+    const preflightToken = `pre_${Math.random().toString(36).slice(2, 12)}`;
+    const expiresAtMs = Date.now() + PREFLIGHT_TTL_MS;
+
+    preflightTokens.set(preflightToken, {
+        preflightToken,
+        customerId,
+        expiresAtMs
+    });
+
     return sendXml(
-      res,
-      400,
-      {
-        error: "validation_error",
-        message: "customer_id is required"
-      },
-      "error"
+        res,
+        201,
+        {
+            preflight_token: preflightToken,
+            expires_at: new Date(expiresAtMs).toISOString(),
+            customer_id: customerId
+        },
+        "preflight"
     );
-  }
-
-  const preflightToken = `pre_${Math.random().toString(36).slice(2, 12)}`;
-  const expiresAtMs = Date.now() + PREFLIGHT_TTL_MS;
-
-  preflightTokens.set(preflightToken, {
-    preflightToken,
-    customerId,
-    expiresAtMs
-  });
-
-  return sendXml(
-    res,
-    201,
-    {
-      preflight_token: preflightToken,
-      expires_at: new Date(expiresAtMs).toISOString(),
-      customer_id: customerId
-    },
-    "preflight"
-  );
 });
 
 app.get("/api/:version/orders/template", (req: Request, res: Response) => {
-  const version = parseVersion(req.params.version);
-  if (!version) {
-    return invalidVersion(res);
-  }
+    const version = parseVersion(req.params.version);
+    if (!version) {
+        return invalidVersion(res);
+    }
 
-  const customerId = readRequiredString(req.query.customer_id);
-  const preflightToken = readRequiredString(req.header("x-preflight-token"));
+    const customerId = readRequiredString(req.query.customer_id);
+    const preflightToken = readRequiredString(req.header("x-preflight-token"));
 
-  if (!customerId) {
+    if (!customerId) {
+        return sendXml(
+            res,
+            400,
+            {
+                error: "validation_error",
+                message: "customer_id is required"
+            },
+            "error"
+        );
+    }
+
+    const token = validatePreflightToken(preflightToken, customerId);
+    if (!token) {
+        return sendXml(
+            res,
+            400,
+            {
+                error: "validation_error",
+                message: "x-preflight-token is required and must match customer_id"
+            },
+            "error"
+        );
+    }
+
     return sendXml(
-      res,
-      400,
-      {
-        error: "validation_error",
-        message: "customer_id is required"
-      },
-      "error"
+        res,
+        200,
+        {
+            template_token: `tpl_${Math.random().toString(36).slice(2, 12)}`,
+            customer_id: customerId,
+            default_currency: "USD",
+            required_fields:
+                version === "v1.1"
+                    ? ["template_token", "customer_id", "pickup_date", "commodity_code_id", "line_items"]
+                    : ["template_token", "customer_id", "pickup_date", "commodity_id", "line_items"]
+        },
+        "template"
     );
-  }
-
-  const token = validatePreflightToken(preflightToken, customerId);
-  if (!token) {
-    return sendXml(
-      res,
-      400,
-      {
-        error: "validation_error",
-        message: "x-preflight-token is required and must match customer_id"
-      },
-      "error"
-    );
-  }
-
-  return sendXml(
-    res,
-    200,
-    {
-      template_token: `tpl_${Math.random().toString(36).slice(2, 12)}`,
-      customer_id: customerId,
-      default_currency: "USD",
-      required_fields:
-        version === "v1.1"
-          ? ["template_token", "customer_id", "pickup_date", "commodity_code_id", "line_items"]
-          : ["template_token", "customer_id", "pickup_date", "commodity_id", "line_items"]
-    },
-    "template"
-  );
 });
 
 app.post("/api/:version/orders/:orderId", (req: Request, res: Response) => {
-  const version = parseVersion(req.params.version);
-  if (!version) {
-    return invalidVersion(res);
-  }
+    const version = parseVersion(req.params.version);
+    if (!version) {
+        return invalidVersion(res);
+    }
 
-  const orderId = readRequiredString(req.params.orderId);
-  if (!orderId) {
-    return sendXml(
-      res,
-      400,
-      {
-        error: "validation_error",
-        message: "orderId path parameter is required"
-      },
-      "error"
-    );
-  }
+    const orderId = readRequiredString(req.params.orderId);
+    if (!orderId) {
+        return sendXml(
+            res,
+            400,
+            {
+                error: "validation_error",
+                message: "orderId path parameter is required"
+            },
+            "error"
+        );
+    }
 
-  const body = req.body as Record<string, unknown>;
-  const preflightToken = readRequiredString(req.header("x-preflight-token"));
-  const templateToken = readRequiredString(body.template_token);
-  const customerId = readRequiredString(body.customer_id);
-  const pickupDate = readRequiredString(body.pickup_date);
-  const commodityId =
-    version === "v1.1"
-      ? readRequiredString(body.commodity_code_id)
-      : readRequiredString(body.commodity_id);
+    const body = req.body as Record<string, unknown>;
+    const preflightToken = readRequiredString(req.header("x-preflight-token"));
+    const templateToken = readRequiredString(body.template_token);
+    const customerId = readRequiredString(body.customer_id);
+    const pickupDate = readRequiredString(body.pickup_date);
+    const commodityId =
+        version === "v1.1"
+            ? readRequiredString(body.commodity_code_id)
+            : readRequiredString(body.commodity_id);
 
-  const lineItems = body.line_items;
+    const lineItems = body.line_items;
 
-  if (!templateToken || !customerId || !pickupDate || !commodityId || !isValidLineItems(lineItems)) {
-    return sendXml(
-      res,
-      400,
-      {
-        error: "validation_error",
-        message:
-          version === "v1.1"
-            ? "Required: template_token, customer_id, pickup_date, commodity_code_id, line_items[] with qty"
-            : "Required: template_token, customer_id, pickup_date, commodity_id, line_items[] with qty"
-      },
-      "error"
-    );
-  }
+    if (!templateToken || !customerId || !pickupDate || !commodityId || !isValidLineItems(lineItems)) {
+        return sendXml(
+            res,
+            400,
+            {
+                error: "validation_error",
+                message:
+                    version === "v1.1"
+                        ? "Required: template_token, customer_id, pickup_date, commodity_code_id, line_items[] with qty"
+                        : "Required: template_token, customer_id, pickup_date, commodity_id, line_items[] with qty"
+            },
+            "error"
+        );
+    }
 
-  const token = validatePreflightToken(preflightToken, customerId);
-  if (!token) {
-    return sendXml(
-      res,
-      400,
-      {
-        error: "validation_error",
-        message: "x-preflight-token is required and must match customer_id"
-      },
-      "error"
-    );
-  }
+    const token = validatePreflightToken(preflightToken, customerId);
+    if (!token) {
+        return sendXml(
+            res,
+            400,
+            {
+                error: "validation_error",
+                message: "x-preflight-token is required and must match customer_id"
+            },
+            "error"
+        );
+    }
 
-  const now = new Date().toISOString();
-  const store = ordersByVersion[version];
-  const existing = store.get(orderId);
-  const order: OrderRecord = {
-    orderId,
-    customerId,
-    pickupDate,
-    commodityId,
-    currency: readRequiredString(body.currency) ?? "USD",
-    lineItems: normalizeLineItems(lineItems),
-    createdAt: existing?.createdAt ?? now,
-    updatedAt: now
-  };
+    const now = new Date().toISOString();
+    const store = ordersByVersion[version];
+    const existing = store.get(orderId);
+    const order: OrderRecord = {
+        orderId,
+        customerId,
+        pickupDate,
+        commodityId,
+        currency: readRequiredString(body.currency) ?? "USD",
+        lineItems: normalizeLineItems(lineItems),
+        createdAt: existing?.createdAt ?? now,
+        updatedAt: now
+    };
 
-  store.set(orderId, order);
+    store.set(orderId, order);
 
-  return sendXml(res, existing ? 200 : 201, toOrderResponse(order, version), "order");
+    return sendXml(res, existing ? 200 : 201, toOrderResponse(order, version), "order");
 });
 
 app.get("/api/:version/orders/:orderId", (req: Request, res: Response) => {
-  const version = parseVersion(req.params.version);
-  if (!version) {
-    return invalidVersion(res);
-  }
+    const version = parseVersion(req.params.version);
+    if (!version) {
+        return invalidVersion(res);
+    }
 
-  const orderId = readRequiredString(req.params.orderId);
-  if (!orderId) {
-    return sendXml(
-      res,
-      400,
-      {
-        error: "validation_error",
-        message: "orderId path parameter is required"
-      },
-      "error"
-    );
-  }
+    const orderId = readRequiredString(req.params.orderId);
+    if (!orderId) {
+        return sendXml(
+            res,
+            400,
+            {
+                error: "validation_error",
+                message: "orderId path parameter is required"
+            },
+            "error"
+        );
+    }
 
-  const order = ordersByVersion[version].get(orderId);
-  if (!order) {
-    return sendXml(
-      res,
-      404,
-      {
-        error: "not_found",
-        message: "Order not found"
-      },
-      "error"
-    );
-  }
+    const order = ordersByVersion[version].get(orderId);
+    if (!order) {
+        return sendXml(
+            res,
+            404,
+            {
+                error: "not_found",
+                message: "Order not found"
+            },
+            "error"
+        );
+    }
 
-  return sendXml(res, 200, toOrderResponse(order, version), "order");
+    return sendXml(res, 200, toOrderResponse(order, version), "order");
 });
 
 app.put("/api/:version/invoices", (req: Request, res: Response) => {
-  const version = parseVersion(req.params.version);
-  if (!version) {
-    return invalidVersion(res);
-  }
+    const version = parseVersion(req.params.version);
+    if (!version) {
+        return invalidVersion(res);
+    }
 
-  const body = req.body as Record<string, unknown>;
-  const invoiceId = readRequiredString(body.invoice_ref) ?? readRequiredString(body.invoice_id);
-  const customerId = readRequiredString(body.client_id) ?? readRequiredString(body.customer_id);
-  const currency = readRequiredString(body.currency);
-  const issuedAt = readRequiredString(body.issued_on) ?? readRequiredString(body.issued_at);
-  const total = readRequiredNumber(body.total_amount) ?? readRequiredNumber(body.total);
-  const notes = readOptionalString(body.notes);
+    const body = req.body as Record<string, unknown>;
+    const invoiceId = readRequiredString(body.invoice_ref) ?? readRequiredString(body.invoice_id);
+    const customerId = readRequiredString(body.client_id) ?? readRequiredString(body.customer_id);
+    const currency = readRequiredString(body.currency);
+    const issuedAt = readRequiredString(body.issued_on) ?? readRequiredString(body.issued_at);
+    const total = readRequiredNumber(body.total_amount) ?? readRequiredNumber(body.total);
+    const notes = readOptionalString(body.notes);
 
-  if (!invoiceId || !customerId || !currency || !issuedAt || total === undefined) {
+    if (!invoiceId || !customerId || !currency || !issuedAt || total === undefined) {
+        return sendXml(
+            res,
+            400,
+            {
+                error: "validation_error",
+                message: "Required: invoice_ref, client_id, total_amount, currency, issued_on"
+            },
+            "error"
+        );
+    }
+
+    const record: InvoiceRecord = {
+        invoiceId,
+        customerId,
+        currency,
+        total,
+        issuedAt,
+        notes
+    };
+
+    invoicesByVersion[version].set(invoiceId, record);
+
     return sendXml(
-      res,
-      400,
-      {
-        error: "validation_error",
-        message: "Required: invoice_ref, client_id, total_amount, currency, issued_on"
-      },
-      "error"
+        res,
+        201,
+        {
+            invoice_ref: record.invoiceId,
+            client_id: record.customerId,
+            total_amount: record.total,
+            currency: record.currency,
+            issued_on: record.issuedAt,
+            notes: record.notes
+        },
+        "invoice"
     );
-  }
-
-  const record: InvoiceRecord = {
-    invoiceId,
-    customerId,
-    currency,
-    total,
-    issuedAt,
-    notes
-  };
-
-  invoicesByVersion[version].set(invoiceId, record);
-
-  return sendXml(
-    res,
-    201,
-    {
-      invoice_ref: record.invoiceId,
-      client_id: record.customerId,
-      total_amount: record.total,
-      currency: record.currency,
-      issued_on: record.issuedAt,
-      notes: record.notes
-    },
-    "invoice"
-  );
 });
 
 app.get("/api/:version/invoices/:invoiceId", (req: Request, res: Response) => {
-  const version = parseVersion(req.params.version);
-  if (!version) {
-    return invalidVersion(res);
-  }
+    const version = parseVersion(req.params.version);
+    if (!version) {
+        return invalidVersion(res);
+    }
 
-  const invoiceId = readRequiredString(req.params.invoiceId);
-  if (!invoiceId) {
+    const invoiceId = readRequiredString(req.params.invoiceId);
+    if (!invoiceId) {
+        return sendXml(
+            res,
+            400,
+            {
+                error: "validation_error",
+                message: "invoiceId path parameter is required"
+            },
+            "error"
+        );
+    }
+
+    const invoice = invoicesByVersion[version].get(invoiceId);
+    if (!invoice) {
+        return sendXml(
+            res,
+            404,
+            {
+                error: "not_found",
+                message: "Invoice not found"
+            },
+            "error"
+        );
+    }
+
     return sendXml(
-      res,
-      400,
-      {
-        error: "validation_error",
-        message: "invoiceId path parameter is required"
-      },
-      "error"
+        res,
+        200,
+        {
+            invoice_ref: invoice.invoiceId,
+            client_id: invoice.customerId,
+            total_amount: invoice.total,
+            currency: invoice.currency,
+            issued_on: invoice.issuedAt,
+            notes: invoice.notes
+        },
+        "invoice"
     );
-  }
-
-  const invoice = invoicesByVersion[version].get(invoiceId);
-  if (!invoice) {
-    return sendXml(
-      res,
-      404,
-      {
-        error: "not_found",
-        message: "Invoice not found"
-      },
-      "error"
-    );
-  }
-
-  return sendXml(
-    res,
-    200,
-    {
-      invoice_ref: invoice.invoiceId,
-      client_id: invoice.customerId,
-      total_amount: invoice.total,
-      currency: invoice.currency,
-      issued_on: invoice.issuedAt,
-      notes: invoice.notes
-    },
-    "invoice"
-  );
 });
 
 app.get("/api/:version/expenses/summary", (req: Request, res: Response) => {
-  const version = parseVersion(req.params.version);
-  if (!version) {
-    return invalidVersion(res);
-  }
+    const version = parseVersion(req.params.version);
+    if (!version) {
+        return invalidVersion(res);
+    }
 
-  const customerId = readRequiredString(req.query.customer_ref);
-  const month = readRequiredString(req.query.period);
+    const customerId = readRequiredString(req.query.customer_ref);
+    const month = readRequiredString(req.query.period);
 
-  if (!customerId) {
+    if (!customerId) {
+        return sendXml(
+            res,
+            400,
+            {
+                error: "validation_error",
+                message: "customer_ref is required"
+            },
+            "error"
+        );
+    }
+
+    if (!month || !/^\d{4}-\d{2}$/.test(month)) {
+        return sendXml(
+            res,
+            400,
+            {
+                error: "validation_error",
+                message: "period is required and must be YYYY-MM"
+            },
+            "error"
+        );
+    }
+
+    const invoices = [...invoicesByVersion[version].values()]
+        .filter((invoice) => invoice.customerId === customerId)
+        .filter((invoice) => invoice.issuedAt.startsWith(month));
+
+    const totalAmount = invoices.reduce((sum, invoice) => sum + invoice.total, 0);
+
     return sendXml(
-      res,
-      400,
-      {
-        error: "validation_error",
-        message: "customer_ref is required"
-      },
-      "error"
+        res,
+        200,
+        {
+            customer_ref: customerId,
+            period: month,
+            invoice_total_count: invoices.length,
+            expenses_total: Number(totalAmount.toFixed(2)),
+            currency_code: "USD"
+        },
+        "expense_summary"
     );
-  }
-
-  if (!month || !/^\d{4}-\d{2}$/.test(month)) {
-    return sendXml(
-      res,
-      400,
-      {
-        error: "validation_error",
-        message: "period is required and must be YYYY-MM"
-      },
-      "error"
-    );
-  }
-
-  const invoices = [...invoicesByVersion[version].values()]
-    .filter((invoice) => invoice.customerId === customerId)
-    .filter((invoice) => invoice.issuedAt.startsWith(month));
-
-  const totalAmount = invoices.reduce((sum, invoice) => sum + invoice.total, 0);
-
-  return sendXml(
-    res,
-    200,
-    {
-      customer_ref: customerId,
-      period: month,
-      invoice_total_count: invoices.length,
-      expenses_total: Number(totalAmount.toFixed(2)),
-      currency_code: "USD"
-    },
-    "expense_summary"
-  );
 });
 
 app.listen(PORT, () => {
-  console.log(`Legacy fixture server3 (XML) is running on port ${PORT}`);
+    console.log(`Legacy fixture server3 (XML) is running on port ${PORT}`);
 });
 
 function parseVersion(value: unknown): ApiVersion | null {
-  return value === "v1.1" || value === "v1.2" ? value : null;
+    return value === "v1.1" || value === "v1.2" ? value : null;
 }
 
 function invalidVersion(res: Response): Response {
-  return sendXml(
-    res,
-    404,
-    {
-      error: "not_found",
-      message: "Supported versions are v1.1 and v1.2"
-    },
-    "error"
-  );
+    return sendXml(
+        res,
+        404,
+        {
+            error: "not_found",
+            message: "Supported versions are v1.1 and v1.2"
+        },
+        "error"
+    );
 }
 
 function validatePreflightToken(token: string | undefined, customerId: string): PreflightRecord | undefined {
-  if (!token) {
-    return undefined;
-  }
+    if (!token) {
+        return undefined;
+    }
 
-  const record = preflightTokens.get(token);
-  if (!record) {
-    return undefined;
-  }
+    const record = preflightTokens.get(token);
+    if (!record) {
+        return undefined;
+    }
 
-  if (record.customerId !== customerId) {
-    return undefined;
-  }
+    if (record.customerId !== customerId) {
+        return undefined;
+    }
 
-  if (record.expiresAtMs < Date.now()) {
-    preflightTokens.delete(token);
-    return undefined;
-  }
+    if (record.expiresAtMs < Date.now()) {
+        preflightTokens.delete(token);
+        return undefined;
+    }
 
-  return record;
+    return record;
 }
 
 function isValidLineItems(value: unknown): value is OrderLineItemInput[] {
-  if (!Array.isArray(value) || value.length === 0) {
-    return false;
-  }
-
-  return value.every((row) => {
-    if (!row || typeof row !== "object") {
-      return false;
+    if (!Array.isArray(value) || value.length === 0) {
+        return false;
     }
 
-    const item = row as Record<string, unknown>;
-    return (
-      typeof item.sku === "string" &&
-      item.sku.length > 0 &&
-      typeof item.qty === "number" &&
-      item.qty > 0 &&
-      typeof item.unit_price === "number" &&
-      item.unit_price >= 0
-    );
-  });
+    return value.every((row) => {
+        if (!row || typeof row !== "object") {
+            return false;
+        }
+
+        const item = row as Record<string, unknown>;
+        return (
+            typeof item.sku === "string" &&
+            item.sku.length > 0 &&
+            typeof item.qty === "number" &&
+            item.qty > 0 &&
+            typeof item.unit_price === "number" &&
+            item.unit_price >= 0
+        );
+    });
 }
 
 function normalizeLineItems(value: OrderLineItemInput[]): OrderRecord["lineItems"] {
-  return value.map((item) => ({
-    sku: item.sku,
-    quantity: item.qty,
-    unitPrice: item.unit_price
-  }));
+    return value.map((item) => ({
+        sku: item.sku,
+        quantity: item.qty,
+        unitPrice: item.unit_price
+    }));
 }
 
 function toOrderResponse(order: OrderRecord, version: ApiVersion): Record<string, unknown> {
-  return {
-    order_id: order.orderId,
-    customer_id: order.customerId,
-    pickup_date: order.pickupDate,
-    ...(version === "v1.1"
-      ? { commodity_code_id: order.commodityId }
-      : { commodity_id: order.commodityId }),
-    currency: order.currency,
-    line_items: order.lineItems.map((item) => ({
-      sku: item.sku,
-      qty: item.quantity,
-      unit_price: item.unitPrice
-    })),
-    created_at: order.createdAt,
-    updated_at: order.updatedAt
-  };
+    return {
+        order_id: order.orderId,
+        customer_id: order.customerId,
+        pickup_date: order.pickupDate,
+        ...(version === "v1.1"
+            ? { commodity_code_id: order.commodityId }
+            : { commodity_id: order.commodityId }),
+        currency: order.currency,
+        line_items: order.lineItems.map((item) => ({
+            sku: item.sku,
+            qty: item.quantity,
+            unit_price: item.unitPrice
+        })),
+        created_at: order.createdAt,
+        updated_at: order.updatedAt
+    };
 }
 
 function readRequiredString(value: unknown): string | undefined {
-  if (typeof value === "string" && value.trim().length > 0) {
-    return value.trim();
-  }
-  return undefined;
+    if (typeof value === "string" && value.trim().length > 0) {
+        return value.trim();
+    }
+    return undefined;
 }
 
 function readOptionalString(value: unknown): string | undefined {
-  if (typeof value === "string") {
-    const trimmed = value.trim();
-    return trimmed.length > 0 ? trimmed : undefined;
-  }
-  return undefined;
+    if (typeof value === "string") {
+        const trimmed = value.trim();
+        return trimmed.length > 0 ? trimmed : undefined;
+    }
+    return undefined;
 }
 
 function readRequiredNumber(value: unknown): number | undefined {
-  if (typeof value === "number" && Number.isFinite(value)) {
-    return value;
-  }
-  return undefined;
+    if (typeof value === "number" && Number.isFinite(value)) {
+        return value;
+    }
+    return undefined;
 }
 
 function seedInvoices(): void {
-  const initial: InvoiceRecord[] = [
-    {
-      invoiceId: "inv3_1001",
-      customerId: "cust_a",
-      total: 910.25,
-      currency: "USD",
-      issuedAt: "2026-02-02T10:15:00.000Z"
-    },
-    {
-      invoiceId: "inv3_1002",
-      customerId: "cust_a",
-      total: 245,
-      currency: "USD",
-      issuedAt: "2026-02-21T16:40:00.000Z"
-    },
-    {
-      invoiceId: "inv3_2001",
-      customerId: "cust_b",
-      total: 533.1,
-      currency: "USD",
-      issuedAt: "2026-02-12T08:20:00.000Z"
-    }
-  ];
+    const initial: InvoiceRecord[] = [
+        {
+            invoiceId: "inv3_1001",
+            customerId: "cust_a",
+            total: 910.25,
+            currency: "USD",
+            issuedAt: "2026-02-02T10:15:00.000Z"
+        },
+        {
+            invoiceId: "inv3_1002",
+            customerId: "cust_a",
+            total: 245,
+            currency: "USD",
+            issuedAt: "2026-02-21T16:40:00.000Z"
+        },
+        {
+            invoiceId: "inv3_2001",
+            customerId: "cust_b",
+            total: 533.1,
+            currency: "USD",
+            issuedAt: "2026-02-12T08:20:00.000Z"
+        }
+    ];
 
-  (Object.keys(invoicesByVersion) as ApiVersion[]).forEach((version) => {
-    const store = invoicesByVersion[version];
-    initial.forEach((invoice) => {
-      store.set(invoice.invoiceId, { ...invoice });
+    (Object.keys(invoicesByVersion) as ApiVersion[]).forEach((version) => {
+        const store = invoicesByVersion[version];
+        initial.forEach((invoice) => {
+            store.set(invoice.invoiceId, { ...invoice });
+        });
     });
-  });
 }
 
 function sendXml(
-  res: Response,
-  status: number,
-  payload: unknown,
-  rootTag = "response"
+    res: Response,
+    status: number,
+    payload: unknown,
+    rootTag = "response"
 ): Response {
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n${toXml(rootTag, payload)}`;
-  return res.status(status).type("application/xml").send(xml);
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>\n${toXml(rootTag, payload)}`;
+    return res.status(status).type("application/xml").send(xml);
 }
 
 function toXml(tagName: string, value: unknown): string {
-  if (value === null || value === undefined) {
-    return `<${tagName}></${tagName}>`;
-  }
+    if (value === null || value === undefined) {
+        return `<${tagName}></${tagName}>`;
+    }
 
-  if (Array.isArray(value)) {
-    const items = value.map((item) => toXml("item", item)).join("");
-    return `<${tagName}>${items}</${tagName}>`;
-  }
+    if (Array.isArray(value)) {
+        const items = value.map((item) => toXml("item", item)).join("");
+        return `<${tagName}>${items}</${tagName}>`;
+    }
 
-  if (typeof value === "object") {
-    const fields = Object.entries(value as Record<string, unknown>)
-      .map(([key, nested]) => toXml(key, nested))
-      .join("");
-    return `<${tagName}>${fields}</${tagName}>`;
-  }
+    if (typeof value === "object") {
+        const fields = Object.entries(value as Record<string, unknown>)
+            .map(([key, nested]) => toXml(key, nested))
+            .join("");
+        return `<${tagName}>${fields}</${tagName}>`;
+    }
 
-  return `<${tagName}>${escapeXml(String(value))}</${tagName}>`;
+    return `<${tagName}>${escapeXml(String(value))}</${tagName}>`;
 }
 
 function escapeXml(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/\"/g, "&quot;")
-    .replace(/'/g, "&apos;");
+    return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&apos;");
 }

@@ -1,7 +1,7 @@
 {
   "profileId": "cust_a__v1.2__http://localhost:4011",
-  "createdAt": "2026-03-15T03:06:37.924Z",
-  "updatedAt": "2026-03-15T03:06:37.924Z",
+  "createdAt": "2026-03-15T03:21:12.029Z",
+  "updatedAt": "2026-03-15T03:21:12.029Z",
   "apiBaseUrl": "http://localhost:4011",
   "apiVersion": "v1.2",
   "customerId": "cust_a",
@@ -11,24 +11,7 @@
       "goalId": "goal_1",
       "goalText": "Create an order for customer cust_a with a single line item and read it back to confirm all fields",
       "method": "GET",
-      "path": "/api/{{apiVersion}}/system/info",
-      "successStatusCodes": [
-        200
-      ],
-      "requiredHeaders": [
-        "x-api-key"
-      ],
-      "requiredQueryParams": [],
-      "requiredBodyFields": [],
-      "prerequisitePaths": [],
-      "confidence": 0.95
-    },
-    {
-      "capabilityId": "goal_1_step_2",
-      "goalId": "goal_1",
-      "goalText": "Create an order for customer cust_a with a single line item and read it back to confirm all fields",
-      "method": "GET",
-      "path": "/api/{{apiVersion}}/orders/template",
+      "path": "/api/v1.2/orders/template",
       "successStatusCodes": [
         200
       ],
@@ -39,20 +22,15 @@
         "customer_id"
       ],
       "requiredBodyFields": [],
-      "prerequisitePaths": [
-        "/api/{{apiVersion}}/orders/ord_{{runId}}",
-        "/api/{{apiVersion}}/orders/template",
-        "/api/{{apiVersion}}/orders/{{createdOrderId}}",
-        "/api/{{apiVersion}}/system/info"
-      ],
+      "prerequisitePaths": [],
       "confidence": 0.95
     },
     {
-      "capabilityId": "goal_1_step_3",
+      "capabilityId": "goal_1_step_2",
       "goalId": "goal_1",
       "goalText": "Create an order for customer cust_a with a single line item and read it back to confirm all fields",
       "method": "PUT",
-      "path": "/api/{{apiVersion}}/orders/ord_{{runId}}",
+      "path": "/api/v1.2/orders/{{runId}}-order-{{random}}",
       "successStatusCodes": [
         201
       ],
@@ -62,17 +40,14 @@
       "requiredQueryParams": [],
       "requiredBodyFields": [
         "commodity_code_id",
-        "currency",
         "customer_id",
         "line_items",
         "pickup_date",
         "template_token"
       ],
       "prerequisitePaths": [
-        "/api/{{apiVersion}}/orders/ord_{{runId}}",
-        "/api/{{apiVersion}}/orders/template",
-        "/api/{{apiVersion}}/orders/{{createdOrderId}}",
-        "/api/{{apiVersion}}/system/info"
+        "/api/v1.2/orders/template",
+        "/api/v1.2/orders/{{runId}}-order-{{random}}"
       ],
       "confidence": 0.95
     },
@@ -114,8 +89,7 @@
       "requiredQueryParams": [],
       "requiredBodyFields": [],
       "prerequisitePaths": [
-        "/api/v1.2/invoices",
-        "/api/v1.2/invoices/{{createdInvoiceId}}"
+        "/api/v1.2/invoices"
       ],
       "confidence": 0.95
     }
