@@ -4,7 +4,14 @@ import { parseGoals } from "./goalParser";
 import { probeGoal } from "./probeOrchestrator";
 import { validateGoal } from "./validationEngine";
 import { loadDocFile, buildContextString } from "./knowledgeContext";
+import { analyzeDrift } from "./driftAnalyzer";
+import { buildCapabilityProfile } from "./discoveryEngine";
+import { loadExistingProfile, saveProfile } from "./profileStore";
+import { writeSdk } from "./sdkGenerator";
 import type {
+    AttemptDiagnostic,
+    CapabilityProfile,
+    DriftReport,
     GoalInput,
     AttemptTrace,
     GoalValidationReport,
@@ -67,6 +74,7 @@ async function run(): Promise<void> {
     // ── Resolve CLI args ─────────────────────────────────────────────────────
     const args = process.argv.slice(2);
     const configArg = args.find((a) => a.startsWith("--config="));
+    const skipSdk = args.includes("--skip-sdk");
 
     if (!configArg) {
         console.error(
@@ -79,7 +87,10 @@ async function run(): Promise<void> {
             "  apiVersion     string    – version string passed to the LLM\n" +
             "  customerId     string    – customer/tenant identifier\n" +
             "  docPath        string    – path to human-readable API documentation file\n" +
-            "  openApiPath    string?   – optional path to OpenAPI YAML/JSON file\n"
+            "  openApiPath    string?   – optional path to OpenAPI YAML/JSON file\n" +
+            "\n" +
+            "Optional flags:\n" +
+            "  --skip-sdk                skip SDK generation for this run\n"
         );
         process.exit(1);
     }
@@ -135,11 +146,17 @@ async function run(): Promise<void> {
     // ── Probe each goal ──────────────────────────────────────────────────────
     printSection("Step 2 – Probing goals");
     const allAttempts: AttemptTrace[] = [];
+    const allDiagnostics: AttemptDiagnostic[] = [];
 
     for (const goal of parsedGoals) {
         console.log(`\n▸ Probing: ${goal.rawGoal}`);
         const attempts = await probeGoal(goal, input);
         allAttempts.push(...attempts);
+        attempts.forEach((attempt) => {
+            if (attempt.diagnostics) {
+                allDiagnostics.push(...attempt.diagnostics);
+            }
+        });
     }
 
     // ── Validate each goal ───────────────────────────────────────────────────
@@ -168,9 +185,47 @@ async function run(): Promise<void> {
 
     const finishedAt = new Date().toISOString();
 
+    // ── Phase 2: Capability profile + drift + SDK ───────────────────────────
+    printSection("Step 4 – Capability profile and drift");
+    const previousProfile = loadExistingProfile(
+        input.customerId,
+        input.apiVersion,
+        input.apiBaseUrl
+    );
+    const newProfile: CapabilityProfile = buildCapabilityProfile(
+        input,
+        parsedGoals,
+        allAttempts,
+        reports,
+        allDiagnostics
+    );
+    const driftReport: DriftReport = analyzeDrift(previousProfile, newProfile);
+    const profilePath = saveProfile(newProfile);
+
+    console.log(`  Profile saved: ${profilePath}`);
+    console.log(`  Capabilities discovered: ${newProfile.capabilities.length}`);
+    console.log(`  Drift summary: ${driftReport.summary}`);
+
+    if (driftReport.changes.length > 0) {
+        for (const change of driftReport.changes) {
+            console.log(
+                `  - [${change.severity}] ${change.type.toUpperCase()} ${change.capabilityId}: ${change.message}`
+            );
+        }
+    }
+
+    let generatedSdkPath: string | undefined;
+    if (!skipSdk) {
+        printSection("Step 5 – SDK generation");
+        generatedSdkPath = writeSdk(newProfile);
+        console.log(`  Generated SDK: ${generatedSdkPath}`);
+    }
+
     // ── Persist session to disk ───────────────────────────────────────────────
     const summaryLines: string[] = [
         `Session ${sessionId}: ${succeeded}/${reports.length} goals succeeded.`,
+        `Capabilities discovered: ${newProfile.capabilities.length}.`,
+        `Drift: ${driftReport.summary}`,
         ...reports.map((r) => `[${r.status}] ${r.rawGoal}: ${r.summary}`),
     ];
 
@@ -182,6 +237,9 @@ async function run(): Promise<void> {
         parsedGoals,
         allAttempts,
         validationReports: reports,
+        capabilityProfile: newProfile,
+        driftReport,
+        generatedSdkPath,
         overallSuccess,
         summaryText: summaryLines.join("\n"),
     };

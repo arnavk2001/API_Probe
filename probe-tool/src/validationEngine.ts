@@ -191,7 +191,8 @@ function compareExpectedToActual(
             }
 
             const nextPath = path ? `${path}.${key}` : key;
-            compareExpectedToActual(value, actualObject[key], nextPath, validations);
+            const actualValue = resolveActualValue(actualObject, key);
+            compareExpectedToActual(value, actualValue, nextPath, validations);
         }
         return;
     }
@@ -206,6 +207,52 @@ function compareExpectedToActual(
                 ? undefined
                 : `Expected ${JSON.stringify(expected)} but received ${JSON.stringify(actual ?? null)}.`
     });
+}
+
+function resolveActualValue(
+    actualObject: Record<string, unknown>,
+    expectedKey: string
+): unknown {
+    if (actualObject[expectedKey] !== undefined) {
+        return actualObject[expectedKey];
+    }
+
+    for (const alias of aliasesFor(expectedKey)) {
+        if (actualObject[alias] !== undefined) {
+            return actualObject[alias];
+        }
+    }
+
+    return actualObject[expectedKey];
+}
+
+function aliasesFor(key: string): string[] {
+    switch (key) {
+        case "invoice_id":
+            return ["invoice_ref"];
+        case "customer_id":
+            return ["client_id", "customer_ref"];
+        case "total":
+            return ["total_amount", "expenses_total"];
+        case "issued_at":
+            return ["issued_on"];
+        case "month":
+            return ["period"];
+        case "invoice_count":
+            return ["invoice_total_count"];
+        case "currency":
+            return ["currency_code"];
+        case "commodity_id":
+            return ["commodity_code_id"];
+        case "commodity_code_id":
+            return ["commodity_id"];
+        case "quantity":
+            return ["qty"];
+        case "qty":
+            return ["quantity"];
+        default:
+            return [];
+    }
 }
 
 function mergeFieldValidations(

@@ -107,6 +107,7 @@ export type AttemptTrace = {
     succeeded: boolean;
     failedAtStep?: string;
     failureReason?: string;
+    diagnostics?: AttemptDiagnostic[];
 };
 
 // ─── Validation ───────────────────────────────────────────────────────────────
@@ -139,6 +140,72 @@ export type ProbeSession = {
     parsedGoals: ParsedGoal[];
     allAttempts: AttemptTrace[];
     validationReports: GoalValidationReport[];
+    capabilityProfile?: CapabilityProfile;
+    driftReport?: DriftReport;
+    generatedSdkPath?: string;
     overallSuccess: boolean;
     summaryText: string;
+};
+
+// ─── Phase 2 Discovery / Drift ───────────────────────────────────────────────
+
+export type DiagnosticCode =
+    | "METHOD_MISMATCH"
+    | "PARAMETER_MISMATCH"
+    | "AUTH_MISMATCH"
+    | "MISSING_PREREQUISITE_STEP"
+    | "RESOURCE_NOT_FOUND"
+    | "NETWORK_FAILURE"
+    | "VALIDATION_MISMATCH"
+    | "UNKNOWN_FAILURE";
+
+export type AttemptDiagnostic = {
+    code: DiagnosticCode;
+    severity: "low" | "medium" | "high";
+    stepId?: string;
+    message: string;
+    suggestion?: string;
+};
+
+export type CapabilitySignature = {
+    capabilityId: string;
+    goalId: string;
+    goalText: string;
+    method: HttpMethod;
+    path: string;
+    successStatusCodes: number[];
+    requiredHeaders: string[];
+    requiredQueryParams: string[];
+    requiredBodyFields: string[];
+    prerequisitePaths: string[];
+    confidence: number;
+};
+
+export type CapabilityProfile = {
+    profileId: string;
+    createdAt: string;
+    updatedAt: string;
+    apiBaseUrl: string;
+    apiVersion: string;
+    customerId: string;
+    capabilities: CapabilitySignature[];
+    recentDiagnostics: AttemptDiagnostic[];
+};
+
+export type DriftChangeType = "added" | "removed" | "modified";
+export type DriftSeverity = "compatible" | "warning" | "breaking";
+
+export type DriftChange = {
+    capabilityId: string;
+    type: DriftChangeType;
+    severity: DriftSeverity;
+    message: string;
+};
+
+export type DriftReport = {
+    profileId: string;
+    generatedAt: string;
+    hasChanges: boolean;
+    summary: string;
+    changes: DriftChange[];
 };
