@@ -5,7 +5,8 @@
     "description": "LLM-driven API probing tool – Phase A",
     "scripts": {
         "build": "tsc -p tsconfig.json",
-        "probe": "tsx src/cli.ts"
+        "probe": "tsx src/cli.ts",
+        "phase3:test": "tsx src/testHarness.ts"
     },
     "engines": {
         "node": ">=20"

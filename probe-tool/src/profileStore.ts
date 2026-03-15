@@ -42,3 +42,21 @@ export function saveProfile(profile: CapabilityProfile): string {
     fs.writeFileSync(filePath, JSON.stringify(profile, null, 2), "utf-8");
     return filePath;
 }
+
+export function listProfiles(): CapabilityProfile[] {
+    if (!fs.existsSync(PROFILE_DIR)) {
+        return [];
+    }
+
+    return fs
+        .readdirSync(PROFILE_DIR)
+        .filter((fileName) => fileName.endsWith(".json"))
+        .map((fileName) => {
+            const raw = fs.readFileSync(path.join(PROFILE_DIR, fileName), "utf-8");
+            return JSON.parse(raw) as CapabilityProfile;
+        });
+}
+
+export function profileDirectoryPath(): string {
+    return PROFILE_DIR;
+}

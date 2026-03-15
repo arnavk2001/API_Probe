@@ -13,16 +13,34 @@ export function loadDocFile(docPath: string): string {
     return fs.readFileSync(resolved, "utf-8");
 }
 
+export async function loadDocUrls(urls: string[]): Promise<string[]> {
+    const docs: string[] = [];
+    for (const url of urls) {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`Failed to fetch documentation URL ${url}: HTTP ${response.status}`);
+        }
+        docs.push(await response.text());
+    }
+    return docs;
+}
+
 /**
  * Combines human-readable and OpenAPI documentation into a single context string
  * that is given to the LLM as background knowledge.
  */
 export function buildContextString(
-    humanReadableDoc: string,
+    humanReadableDoc: string | string[],
     openApiSpec?: string
 ): string {
+    const humanDocParts = Array.isArray(humanReadableDoc)
+        ? humanReadableDoc
+        : [humanReadableDoc];
+
     const parts: string[] = [
-        "=== API DOCUMENTATION (Human-Readable) ===\n" + humanReadableDoc,
+        ...humanDocParts.map((doc, index) =>
+            `=== API DOCUMENTATION (Human-Readable${humanDocParts.length > 1 ? ` #${index + 1}` : ""}) ===\n${doc}`
+        ),
     ];
 
     if (openApiSpec) {

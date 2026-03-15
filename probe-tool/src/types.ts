@@ -13,6 +13,8 @@ export type GoalInput = {
     customerId: string;
     /** Full documentation text (human-readable + optional OpenAPI). Loaded before the session. */
     apiDocumentation: string;
+    /** Optional source metadata for traceability and debugging. */
+    documentationSources?: string[];
 };
 
 // ─── Parsed Goals ─────────────────────────────────────────────────────────────
@@ -143,6 +145,7 @@ export type ProbeSession = {
     capabilityProfile?: CapabilityProfile;
     driftReport?: DriftReport;
     generatedSdkPath?: string;
+    generatedSdkIndexPath?: string;
     overallSuccess: boolean;
     summaryText: string;
 };

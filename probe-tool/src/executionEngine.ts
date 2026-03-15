@@ -72,6 +72,47 @@ function extractByPath(body: unknown, dotPath: string): unknown {
     return cursor;
 }
 
+function addCanonicalAliases(
+    responseBody: unknown,
+    context: Record<string, unknown>
+): Record<string, unknown> {
+    if (!responseBody || typeof responseBody !== "object" || Array.isArray(responseBody)) {
+        return context;
+    }
+
+    const body = responseBody as Record<string, unknown>;
+    const aliases: Record<string, unknown> = {};
+
+    const orderId = body.order_id;
+    if (typeof orderId === "string" && orderId.length > 0) {
+        aliases.orderId = orderId;
+        aliases.createdOrderId = orderId;
+    }
+
+    const invoiceId =
+        typeof body.invoice_id === "string"
+            ? body.invoice_id
+            : typeof body.invoice_ref === "string"
+                ? body.invoice_ref
+                : undefined;
+    if (typeof invoiceId === "string" && invoiceId.length > 0) {
+        aliases.invoiceId = invoiceId;
+        aliases.createdInvoiceId = invoiceId;
+    }
+
+    const templateToken = body.template_token;
+    if (typeof templateToken === "string" && templateToken.length > 0) {
+        aliases.templateToken = templateToken;
+    }
+
+    const preflightToken = body.preflight_token;
+    if (typeof preflightToken === "string" && preflightToken.length > 0) {
+        aliases.preflightToken = preflightToken;
+    }
+
+    return { ...context, ...aliases };
+}
+
 /**
  * Execute a single step in a workflow plan.
  * Returns a StepTrace capturing the full request/response and any extracted variables.
@@ -169,6 +210,10 @@ async function executeStep(
                 updatedContext[varName] = extracted;
             }
         }
+    }
+
+    if (success) {
+        Object.assign(updatedContext, addCanonicalAliases(responseBody, updatedContext));
     }
 
     const durationMs = Date.now() - startMs;

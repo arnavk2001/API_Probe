@@ -3,11 +3,11 @@ import * as path from "path";
 import { parseGoals } from "./goalParser";
 import { probeGoal } from "./probeOrchestrator";
 import { validateGoal } from "./validationEngine";
-import { loadDocFile, buildContextString } from "./knowledgeContext";
+import { loadDocFile, buildContextString, loadDocUrls } from "./knowledgeContext";
 import { analyzeDrift } from "./driftAnalyzer";
 import { buildCapabilityProfile } from "./discoveryEngine";
-import { loadExistingProfile, saveProfile } from "./profileStore";
-import { writeSdk } from "./sdkGenerator";
+import { listProfiles, loadExistingProfile, saveProfile } from "./profileStore";
+import { writeSdk, writeUnifiedSdk } from "./sdkGenerator";
 import type {
     AttemptDiagnostic,
     CapabilityProfile,
@@ -86,7 +86,8 @@ async function run(): Promise<void> {
             "  authHeader     object    – headers to add to every request\n" +
             "  apiVersion     string    – version string passed to the LLM\n" +
             "  customerId     string    – customer/tenant identifier\n" +
-            "  docPath        string    – path to human-readable API documentation file\n" +
+            "  docPath        string?   – path to human-readable API documentation file\n" +
+            "  docUrls        string[]? – remote documentation URLs to fetch and include\n" +
             "  openApiPath    string?   – optional path to OpenAPI YAML/JSON file\n" +
             "\n" +
             "Optional flags:\n" +
@@ -103,18 +104,38 @@ async function run(): Promise<void> {
         authHeader: Record<string, string>;
         apiVersion: string;
         customerId: string;
-        docPath: string;
+        docPath?: string;
+        docUrls?: string[];
         openApiPath?: string;
     };
 
     // ── Load documentation ───────────────────────────────────────────────────
     const baseDir = path.dirname(path.resolve(configPath));
-    const humanDoc = loadDocFile(path.resolve(baseDir, config.docPath));
+    const humanDocs: string[] = [];
+
+    if (config.docPath) {
+        humanDocs.push(loadDocFile(path.resolve(baseDir, config.docPath)));
+    }
+
+    if (config.docUrls && config.docUrls.length > 0) {
+        const remoteDocs = await loadDocUrls(config.docUrls);
+        humanDocs.push(...remoteDocs);
+    }
+
+    if (humanDocs.length === 0) {
+        throw new Error("At least one documentation source is required (docPath and/or docUrls).");
+    }
+
     const openApiDoc = config.openApiPath
         ? loadDocFile(path.resolve(baseDir, config.openApiPath))
         : undefined;
 
-    const apiDocumentation = buildContextString(humanDoc, openApiDoc);
+    const apiDocumentation = buildContextString(humanDocs, openApiDoc);
+    const docSources = [
+        ...(config.docPath ? [path.resolve(baseDir, config.docPath)] : []),
+        ...(config.docUrls ?? []),
+        ...(config.openApiPath ? [path.resolve(baseDir, config.openApiPath)] : []),
+    ];
 
     const input: GoalInput = {
         goals: config.goals,
@@ -123,6 +144,7 @@ async function run(): Promise<void> {
         apiVersion: config.apiVersion,
         customerId: config.customerId,
         apiDocumentation,
+        documentationSources: docSources,
     };
 
     const sessionId = `session_${randomId()}`;
@@ -215,10 +237,14 @@ async function run(): Promise<void> {
     }
 
     let generatedSdkPath: string | undefined;
+    let generatedSdkIndexPath: string | undefined;
     if (!skipSdk) {
         printSection("Step 5 – SDK generation");
         generatedSdkPath = writeSdk(newProfile);
-        console.log(`  Generated SDK: ${generatedSdkPath}`);
+        const allProfiles = listProfiles();
+        generatedSdkIndexPath = writeUnifiedSdk(allProfiles);
+        console.log(`  Generated profile SDK: ${generatedSdkPath}`);
+        console.log(`  Generated unified SDK: ${generatedSdkIndexPath}`);
     }
 
     // ── Persist session to disk ───────────────────────────────────────────────
@@ -240,6 +266,7 @@ async function run(): Promise<void> {
         capabilityProfile: newProfile,
         driftReport,
         generatedSdkPath,
+        generatedSdkIndexPath,
         overallSuccess,
         summaryText: summaryLines.join("\n"),
     };
