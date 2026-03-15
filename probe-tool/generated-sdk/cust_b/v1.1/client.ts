@@ -2,9 +2,8 @@
 export class LegacyApiClient_cust_b_v1_1_http_localhost_4011 {
   private readonly capabilityMap = {
     "goal_1_step_1": { method: "GET", path: "/api/v1.1/orders/template" },
-    "goal_1_step_2": { method: "PUT", path: "/api/v1.1/orders/{{runId}}-order-{{customerId}}" },
-    "goal_2_step_1": { method: "POST", path: "/api/v1.1/invoices" },
-    "goal_3_step_1": { method: "GET", path: "/api/v1.1/expenses/summary" }
+    "goal_1_step_2": { method: "PUT", path: "/api/v1.1/orders/{{runId}}-order-{{randomShort}}" },
+    "goal_2_step_1": { method: "POST", path: "/api/v1.1/invoices" }
   };
 
   constructor(
@@ -74,7 +73,7 @@ export class LegacyApiClient_cust_b_v1_1_http_localhost_4011 {
 
 
   async call_goal_1_step_2(request: { path?: string; headers?: Record<string, string>; body?: unknown } = {}): Promise<unknown> {
-    request.path = request.path ?? "/api/v1.1/orders/{{runId}}-order-{{customerId}}";
+    request.path = request.path ?? "/api/v1.1/orders/{{runId}}-order-{{randomShort}}";
     const response = await fetch(this.baseUrl + (request.path ?? ""), {
       method: "PUT",
       headers: { ...this.authHeader, ...(request.headers ?? {}) },
@@ -104,33 +103,6 @@ export class LegacyApiClient_cust_b_v1_1_http_localhost_4011 {
     request.path = request.path ?? "/api/v1.1/invoices";
     const response = await fetch(this.baseUrl + (request.path ?? ""), {
       method: "POST",
-      headers: { ...this.authHeader, ...(request.headers ?? {}) },
-      body:
-        request.body !== undefined && request.body !== null
-          ? JSON.stringify(request.body)
-          : undefined,
-    });
-
-    const text = await response.text();
-    let json: unknown = null;
-    try {
-      json = text ? JSON.parse(text) : null;
-    } catch {
-      json = text;
-    }
-
-    if (!response.ok) {
-      throw new Error('SDK call failed (' + response.status + ') for ' + (request.path ?? '') + ': ' + JSON.stringify(json));
-    }
-
-    return json;
-  }
-
-
-  async call_goal_3_step_1(request: { path?: string; headers?: Record<string, string>; body?: unknown } = {}): Promise<unknown> {
-    request.path = request.path ?? "/api/v1.1/expenses/summary";
-    const response = await fetch(this.baseUrl + (request.path ?? ""), {
-      method: "GET",
       headers: { ...this.authHeader, ...(request.headers ?? {}) },
       body:
         request.body !== undefined && request.body !== null

@@ -1,7 +1,7 @@
 {
   "profileId": "cust_a__v1.1__http://localhost:4011",
-  "createdAt": "2026-03-15T02:33:38.341Z",
-  "updatedAt": "2026-03-15T02:33:38.341Z",
+  "createdAt": "2026-03-15T03:05:32.172Z",
+  "updatedAt": "2026-03-15T03:05:32.172Z",
   "apiBaseUrl": "http://localhost:4011",
   "apiVersion": "v1.1",
   "customerId": "cust_a",
@@ -30,7 +30,7 @@
       "goalId": "goal_1",
       "goalText": "Create an order for customer cust_a with a single line item and read it back to confirm all fields",
       "method": "PUT",
-      "path": "/api/v1.1/orders/{{runId}}-order-{{templateToken}}",
+      "path": "/api/v1.1/orders/ord_{{runId}}",
       "successStatusCodes": [
         201
       ],
@@ -40,14 +40,15 @@
       "requiredQueryParams": [],
       "requiredBodyFields": [
         "commodity_id",
+        "currency",
         "customer_id",
         "line_items",
         "pickup_date",
         "template_token"
       ],
       "prerequisitePaths": [
-        "/api/v1.1/orders/template",
-        "/api/v1.1/orders/{{runId}}-order-{{templateToken}}"
+        "/api/v1.1/orders/ord_{{runId}}",
+        "/api/v1.1/orders/template"
       ],
       "confidence": 0.95
     },
@@ -56,7 +57,7 @@
       "goalId": "goal_2",
       "goalText": "Post a new invoice for customer cust_a and then retrieve it to confirm it was stored correctly",
       "method": "POST",
-      "path": "/api/v1.1/invoices",
+      "path": "/api/{{apiVersion}}/invoices",
       "successStatusCodes": [
         201
       ],
@@ -79,7 +80,7 @@
       "goalId": "goal_3",
       "goalText": "Retrieve the end-of-month expense summary for customer cust_a for February 2026",
       "method": "GET",
-      "path": "/api/v1.1/expenses/summary",
+      "path": "/api/{{apiVersion}}/expenses/summary",
       "successStatusCodes": [
         200
       ],

@@ -1,7 +1,7 @@
 {
   "profileId": "cust_b__v1.1__http://localhost:4011",
-  "createdAt": "2026-03-15T02:34:32.697Z",
-  "updatedAt": "2026-03-15T02:34:32.697Z",
+  "createdAt": "2026-03-15T03:06:51.923Z",
+  "updatedAt": "2026-03-15T03:06:51.923Z",
   "apiBaseUrl": "http://localhost:4011",
   "apiVersion": "v1.1",
   "customerId": "cust_b",
@@ -30,7 +30,7 @@
       "goalId": "goal_1",
       "goalText": "Create an order for customer cust_b with a single line item and read it back to confirm all fields",
       "method": "PUT",
-      "path": "/api/v1.1/orders/{{runId}}-order-{{customerId}}",
+      "path": "/api/v1.1/orders/{{runId}}-order-{{randomShort}}",
       "successStatusCodes": [
         201
       ],
@@ -48,7 +48,7 @@
       "prerequisitePaths": [
         "/api/v1.1/orders/template",
         "/api/v1.1/orders/{{createdOrderId}}",
-        "/api/v1.1/orders/{{runId}}-order-{{customerId}}"
+        "/api/v1.1/orders/{{runId}}-order-{{randomShort}}"
       ],
       "confidence": 0.95
     },
@@ -72,26 +72,6 @@
         "issued_at",
         "total"
       ],
-      "prerequisitePaths": [],
-      "confidence": 0.95
-    },
-    {
-      "capabilityId": "goal_3_step_1",
-      "goalId": "goal_3",
-      "goalText": "Retrieve the end-of-month expense summary for customer cust_b for February 2026",
-      "method": "GET",
-      "path": "/api/v1.1/expenses/summary",
-      "successStatusCodes": [
-        200
-      ],
-      "requiredHeaders": [
-        "x-api-key"
-      ],
-      "requiredQueryParams": [
-        "customer_id",
-        "month"
-      ],
-      "requiredBodyFields": [],
       "prerequisitePaths": [],
       "confidence": 0.95
     }

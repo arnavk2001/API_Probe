@@ -28,17 +28,17 @@ const PROFILES: InstallationProfile[] = [
       {
         "capabilityId": "goal_1_step_2",
         "method": "PUT",
-        "path": "/api/v1.1/orders/{{runId}}-order-{{templateToken}}"
+        "path": "/api/v1.1/orders/ord_{{runId}}"
       },
       {
         "capabilityId": "goal_2_step_1",
         "method": "POST",
-        "path": "/api/v1.1/invoices"
+        "path": "/api/{{apiVersion}}/invoices"
       },
       {
         "capabilityId": "goal_3_step_1",
         "method": "GET",
-        "path": "/api/v1.1/expenses/summary"
+        "path": "/api/{{apiVersion}}/expenses/summary"
       }
     ]
   },
@@ -61,12 +61,45 @@ const PROFILES: InstallationProfile[] = [
       {
         "capabilityId": "goal_1_step_2",
         "method": "POST",
-        "path": "/api/v1.1/orders/{{runId}}-order-{{randomInt}}"
+        "path": "/api/v1.1/orders/{{runId}}-order"
       },
       {
         "capabilityId": "goal_2_step_1",
         "method": "PUT",
         "path": "/api/v1.1/invoices"
+      },
+      {
+        "capabilityId": "goal_3_step_1",
+        "method": "GET",
+        "path": "/api/v1.1/expenses/summary"
+      }
+    ]
+  },
+  {
+    profileId: "cust_a__v1.1__http://localhost:4013",
+    customerId: "cust_a",
+    apiVersion: "v1.1",
+    apiBaseUrl: "http://localhost:4013",
+    capabilities: [
+      {
+        "capabilityId": "goal_1_step_preflight",
+        "method": "POST",
+        "path": "/api/v1.1/orders/preflight"
+      },
+      {
+        "capabilityId": "goal_1_step_1",
+        "method": "GET",
+        "path": "/api/v1.1/orders/template"
+      },
+      {
+        "capabilityId": "goal_1_step_2",
+        "method": "POST",
+        "path": "/api/v1.1/orders/{{runId}}-order"
+      },
+      {
+        "capabilityId": "goal_2_step_1",
+        "method": "PUT",
+        "path": "/api/{{apiVersion}}/invoices"
       },
       {
         "capabilityId": "goal_3_step_1",
@@ -84,17 +117,27 @@ const PROFILES: InstallationProfile[] = [
       {
         "capabilityId": "goal_1_step_1",
         "method": "GET",
-        "path": "/api/v1.2/orders/template"
+        "path": "/api/{{apiVersion}}/system/info"
       },
       {
         "capabilityId": "goal_1_step_2",
+        "method": "GET",
+        "path": "/api/{{apiVersion}}/orders/template"
+      },
+      {
+        "capabilityId": "goal_1_step_3",
         "method": "PUT",
-        "path": "/api/v1.2/orders/{{runId}}-order"
+        "path": "/api/{{apiVersion}}/orders/ord_{{runId}}"
       },
       {
         "capabilityId": "goal_2_step_1",
         "method": "POST",
         "path": "/api/v1.2/invoices"
+      },
+      {
+        "capabilityId": "goal_2_step_2",
+        "method": "GET",
+        "path": "/api/v1.2/invoices/{{createdInvoiceId}}"
       }
     ]
   },
@@ -112,17 +155,12 @@ const PROFILES: InstallationProfile[] = [
       {
         "capabilityId": "goal_1_step_2",
         "method": "PUT",
-        "path": "/api/v1.1/orders/{{runId}}-order-{{customerId}}"
+        "path": "/api/v1.1/orders/{{runId}}-order-{{randomShort}}"
       },
       {
         "capabilityId": "goal_2_step_1",
         "method": "POST",
         "path": "/api/v1.1/invoices"
-      },
-      {
-        "capabilityId": "goal_3_step_1",
-        "method": "GET",
-        "path": "/api/v1.1/expenses/summary"
       }
     ]
   }
