@@ -1,0 +1,100 @@
+{
+  "profileId": "cust_b__v1.1__http://localhost:4011",
+  "createdAt": "2026-03-15T02:34:32.697Z",
+  "updatedAt": "2026-03-15T02:34:32.697Z",
+  "apiBaseUrl": "http://localhost:4011",
+  "apiVersion": "v1.1",
+  "customerId": "cust_b",
+  "capabilities": [
+    {
+      "capabilityId": "goal_1_step_1",
+      "goalId": "goal_1",
+      "goalText": "Create an order for customer cust_b with a single line item and read it back to confirm all fields",
+      "method": "GET",
+      "path": "/api/v1.1/orders/template",
+      "successStatusCodes": [
+        200
+      ],
+      "requiredHeaders": [
+        "x-api-key"
+      ],
+      "requiredQueryParams": [
+        "customer_id"
+      ],
+      "requiredBodyFields": [],
+      "prerequisitePaths": [],
+      "confidence": 0.95
+    },
+    {
+      "capabilityId": "goal_1_step_2",
+      "goalId": "goal_1",
+      "goalText": "Create an order for customer cust_b with a single line item and read it back to confirm all fields",
+      "method": "PUT",
+      "path": "/api/v1.1/orders/{{runId}}-order-{{customerId}}",
+      "successStatusCodes": [
+        201
+      ],
+      "requiredHeaders": [
+        "x-api-key"
+      ],
+      "requiredQueryParams": [],
+      "requiredBodyFields": [
+        "commodity_id",
+        "customer_id",
+        "line_items",
+        "pickup_date",
+        "template_token"
+      ],
+      "prerequisitePaths": [
+        "/api/v1.1/orders/template",
+        "/api/v1.1/orders/{{createdOrderId}}",
+        "/api/v1.1/orders/{{runId}}-order-{{customerId}}"
+      ],
+      "confidence": 0.95
+    },
+    {
+      "capabilityId": "goal_2_step_1",
+      "goalId": "goal_2",
+      "goalText": "Post a new invoice for customer cust_b and then retrieve it to confirm it was stored correctly",
+      "method": "POST",
+      "path": "/api/v1.1/invoices",
+      "successStatusCodes": [
+        201
+      ],
+      "requiredHeaders": [
+        "x-api-key"
+      ],
+      "requiredQueryParams": [],
+      "requiredBodyFields": [
+        "currency",
+        "customer_id",
+        "invoice_id",
+        "issued_at",
+        "total"
+      ],
+      "prerequisitePaths": [],
+      "confidence": 0.95
+    },
+    {
+      "capabilityId": "goal_3_step_1",
+      "goalId": "goal_3",
+      "goalText": "Retrieve the end-of-month expense summary for customer cust_b for February 2026",
+      "method": "GET",
+      "path": "/api/v1.1/expenses/summary",
+      "successStatusCodes": [
+        200
+      ],
+      "requiredHeaders": [
+        "x-api-key"
+      ],
+      "requiredQueryParams": [
+        "customer_id",
+        "month"
+      ],
+      "requiredBodyFields": [],
+      "prerequisitePaths": [],
+      "confidence": 0.95
+    }
+  ],
+  "recentDiagnostics": []
+}
