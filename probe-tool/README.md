@@ -231,6 +231,9 @@ All scenarios complete with expected outcomes and artifacts.
 Detailed results:
 See TEST_REPORT_PHASE3.md.
 
+Phase 4 XML and blind-drift validation:
+See TEST_REPORT_PHASE4.md.
+
 ## Capabilities Verified by Project Tests
 
 1. Goal parsing and access-level inference.
@@ -241,7 +244,8 @@ See TEST_REPORT_PHASE3.md.
 6. Installation-scoped learning and profile persistence.
 7. Drift detection across reruns.
 8. Multi-customer and multi-version coexistence.
-9. Callable TypeScript SDK generation.
+9. XML response parsing, normalization, and validation.
+10. Callable TypeScript SDK generation.
 
 ## Operational Notes
 
