@@ -4,6 +4,14 @@ import type {
     AttemptTrace,
     StepTrace,
 } from "./types";
+import { XMLParser } from "fast-xml-parser";
+
+const xmlParser = new XMLParser({
+    ignoreAttributes: false,
+    ignoreDeclaration: true,
+    parseTagValue: true,
+    trimValues: true,
+});
 
 /**
  * Substitute {{varName}} tokens in a string value with matching context entries.
@@ -113,6 +121,57 @@ function addCanonicalAliases(
     return { ...context, ...aliases };
 }
 
+function isLikelyXmlResponse(text: string, contentType?: string): boolean {
+    const lowered = (contentType ?? "").toLowerCase();
+    if (lowered.includes("application/xml") || lowered.includes("text/xml") || lowered.includes("+xml")) {
+        return true;
+    }
+
+    const trimmed = text.trim();
+    return trimmed.startsWith("<") && trimmed.endsWith(">") && trimmed.length > 2;
+}
+
+function normalizeParsedXml(payload: unknown): unknown {
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+        return payload;
+    }
+
+    const cleaned = Object.fromEntries(
+        Object.entries(payload as Record<string, unknown>).filter(([key]) => !key.startsWith("?"))
+    );
+
+    const entries = Object.entries(cleaned);
+    if (entries.length !== 1) {
+        return cleaned;
+    }
+
+    const [, rootValue] = entries[0];
+    return rootValue;
+}
+
+function parseResponseBody(text: string, contentType?: string): unknown {
+    if (!text) {
+        return null;
+    }
+
+    try {
+        return JSON.parse(text);
+    } catch {
+        // fall through to XML/text handling
+    }
+
+    if (isLikelyXmlResponse(text, contentType)) {
+        try {
+            const parsedXml = xmlParser.parse(text);
+            return normalizeParsedXml(parsedXml);
+        } catch {
+            // fall through to plain text
+        }
+    }
+
+    return text;
+}
+
 /**
  * Execute a single step in a workflow plan.
  * Returns a StepTrace capturing the full request/response and any extracted variables.
@@ -184,11 +243,7 @@ async function executeStep(
         });
 
         const text = await response.text();
-        try {
-            responseBody = text ? JSON.parse(text) : null;
-        } catch {
-            responseBody = text;
-        }
+        responseBody = parseResponseBody(text, response.headers.get("content-type") ?? undefined);
 
         success = response.ok;
         if (!success) {

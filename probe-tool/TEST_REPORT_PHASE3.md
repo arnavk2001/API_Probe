@@ -30,8 +30,9 @@ Run the full Phase 3 harness:
 Harness scenarios:
 1. Customer A, v1.1, server1 baseline
 2. Customer A, v1.1, server2 drifted installation
-3. Customer A, v1.2, server1 upgrade scenario
-4. Customer B, v1.1, server1 unchanged scenario
+3. Customer A, v1.1, server3 XML drifted installation
+4. Customer A, v1.2, server1 upgrade scenario
+5. Customer B, v1.1, server1 unchanged scenario
 
 The harness verifies scenario success, drift behavior, profile persistence, and unified SDK generation.
 
@@ -43,8 +44,9 @@ A test run is considered **passed** when all conditions below hold:
 3. Retry logic succeeds within max 3 attempts.
 4. Goal validation returns success for all requested tasks.
 5. Capability profile is written for server2 installation.
-6. Matrix harness completes all scenarios successfully.
-7. Unified SDK file is generated and callable.
+6. Capability profile is written for server3 XML installation.
+7. Matrix harness completes all scenarios successfully.
+8. Unified SDK file is generated and callable.
 
 ## 4. Executed Tests and Outcomes
 
@@ -72,11 +74,11 @@ Final status:
 ### 4.2 Full Phase 3 Harness Outcome
 
 Command output summary:
-- Scenario execution completed for all four matrix cases.
+- Scenario execution completed for all five matrix cases.
 - Harness final line:
   - `Phase 3 validation succeeded.`
 - Sessions executed:
-  - `4`
+   - `5`
 - Unified SDK generated:
   - `generated-sdk/index.ts`
 
@@ -94,15 +96,16 @@ The test suite validates the following project capabilities:
 6. Write-readback field validation.
 7. Installation-scoped profile persistence (`customer + version + baseUrl`).
 8. Drift-aware behavior capture over reruns.
-9. Multi-customer, multi-version compatibility support.
-10. Callable TypeScript SDK generation (unified and profile-based artifacts).
+9. XML response parsing fallback with normalized extraction semantics.
+10. Multi-customer, multi-version compatibility support.
+11. Callable TypeScript SDK generation (unified and profile-based artifacts).
 
 ## 6. How We Determine the Tests Passed
 
 Pass determination uses objective checks from command outputs and artifacts:
 1. Command exits are successful for blind run and harness run.
 2. Blind run JSON session reports `overallSuccess: true` and all goals success.
-3. Harness reports `Phase 3 validation succeeded` and executes 4 scenarios.
+3. Harness reports `Phase 3 validation succeeded` and executes 5 scenarios.
 4. Generated SDK artifact exists at `generated-sdk/index.ts`.
 5. Installation profiles exist under `profiles/` for tested customer/version/baseUrl combinations.
 

@@ -36,6 +36,9 @@ This is the baseline documented legacy API fixture.
 2. legacy-api/src/server2.ts
 This is the drifted customer-installation variant with undocumented behavioral differences.
 
+3. legacy-api/src/server3.ts
+This is the XML-response drifted installation variant with undocumented behavior differences and field/method drift.
+
 3. probe-tool
 This is the probing product itself.
 
@@ -128,6 +131,9 @@ Starts baseline server on port 4011.
 2. npm run dev:server2
 Starts drifted installation on port 4012.
 
+3. npm run dev:server3
+Starts XML drifted installation on port 4013.
+
 Authentication for both fixtures:
 1. header name: x-api-key
 2. default value: legacy-test-key
@@ -151,8 +157,9 @@ At least one documentation source is required.
 Example configs:
 1. configs/cust_a_v11_server1.json
 2. configs/cust_a_v11_server2.json
-3. configs/cust_a_v12_server1.json
-4. configs/cust_b_v11_server1.json
+3. configs/cust_a_v11_server3.json
+4. configs/cust_a_v12_server1.json
+5. configs/cust_b_v11_server1.json
 
 ## Running the Probe Tool
 
@@ -213,9 +220,10 @@ Run from probe-tool:
 What it validates:
 1. Customer A v1.1 baseline installation.
 2. Customer A v1.1 drifted installation.
-3. Customer A upgrade to v1.2.
-4. Customer B remains on v1.1.
-5. Unified SDK artifact generation.
+3. Customer A v1.1 XML drifted installation.
+4. Customer A upgrade to v1.2.
+5. Customer B remains on v1.1.
+6. Unified SDK artifact generation.
 
 Pass condition:
 All scenarios complete with expected outcomes and artifacts.
@@ -237,10 +245,10 @@ See TEST_REPORT_PHASE3.md.
 
 ## Operational Notes
 
-1. The tool is JSON-first.
+1. The tool is JSON-first with XML response fallback parsing.
 2. It supports custom headers, token workflows, and multi-step API flows.
-3. XML-first and turnkey OAuth or 2FA protocol modules are not yet specialized subsystems.
-4. This does not block current fixture coverage, but it is the next extension point for broader legacy systems.
+3. XML payloads are normalized to object form for dot-path extraction and validation.
+4. Turnkey OAuth or 2FA protocol modules are still future extension points.
 
 ## Troubleshooting
 
@@ -248,7 +256,7 @@ See TEST_REPORT_PHASE3.md.
 Check GEMINI_API_KEY in probe-tool/.env.
 
 2. Port already in use
-Stop existing process on 4011 or 4012 before launching fixtures.
+Stop existing process on 4011, 4012, or 4013 before launching fixtures.
 
 3. Probe fails on first attempt against drifted installation
 This is expected in blind tests. Ensure MAX_PROBE_ATTEMPTS is greater than 1.

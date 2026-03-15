@@ -215,6 +215,13 @@ async function runHarness(): Promise<void> {
         );
         if (server2) started.push(server2);
 
+        const server3 = await startServerIfNeeded(
+            "http://localhost:4013/health",
+            "npm",
+            ["run", "dev:server3"]
+        );
+        if (server3) started.push(server3);
+
         const scenarios: Scenario[] = [
             {
                 name: "cust_a_v11_server1",
@@ -226,6 +233,13 @@ async function runHarness(): Promise<void> {
             {
                 name: "cust_a_v11_server2_drift",
                 configPath: path.join(probeRoot, "configs", "cust_a_v11_server2.json"),
+                maxAttempts: 3,
+                expectOverallSuccess: true,
+                runRetries: 2,
+            },
+            {
+                name: "cust_a_v11_server3_xml_drift",
+                configPath: path.join(probeRoot, "configs", "cust_a_v11_server3.json"),
                 maxAttempts: 3,
                 expectOverallSuccess: true,
                 runRetries: 2,
@@ -252,7 +266,7 @@ async function runHarness(): Promise<void> {
             const session = await runScenario(scenario);
             sessions.push(session);
 
-            if (scenario.name.includes("server2")) {
+            if (scenario.name.includes("server2") || scenario.name.includes("server3")) {
                 for (const goal of session.parsedGoals) {
                     const firstAttempt = session.allAttempts.find(
                         (attempt) => attempt.goalId === goal.id && attempt.attemptIndex === 0
@@ -281,6 +295,10 @@ async function runHarness(): Promise<void> {
         assert(
             fs.existsSync(profilePath("http://localhost:4012", "cust_a", "v1.1")),
             "Missing profile for customer A v1.1 server2"
+        );
+        assert(
+            fs.existsSync(profilePath("http://localhost:4013", "cust_a", "v1.1")),
+            "Missing profile for customer A v1.1 server3"
         );
         assert(
             fs.existsSync(profilePath("http://localhost:4011", "cust_a", "v1.2")),
