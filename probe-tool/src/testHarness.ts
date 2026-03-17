@@ -2,6 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { spawn, ChildProcess } from "child_process";
 import type { ProbeSession } from "./types";
+import { validateGeneratedSdk } from "./sdkRuntimeValidator";
 
 const repoRoot = path.resolve(__dirname, "../..");
 const probeRoot = path.resolve(__dirname, "..");
@@ -308,6 +309,10 @@ async function runHarness(): Promise<void> {
             fs.existsSync(profilePath("http://localhost:4011", "cust_b", "v1.1")),
             "Missing profile for customer B v1.1"
         );
+
+        // Runtime SDK validation: import and exercise generated SDK against live servers
+        console.log("\n[Harness] Running SDK runtime validation...");
+        await validateGeneratedSdk();
 
         console.log("\n[Harness] Phase 3 validation succeeded.");
         console.log(`[Harness] Sessions executed: ${sessions.length}`);

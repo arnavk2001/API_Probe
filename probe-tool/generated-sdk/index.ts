@@ -23,17 +23,17 @@ const PROFILES: InstallationProfile[] = [
       {
         "capabilityId": "goal_1_step_1",
         "method": "GET",
-        "path": "/api/v1.1/orders/template"
+        "path": "/api/{{apiVersion}}/orders/template"
       },
       {
         "capabilityId": "goal_1_step_2",
         "method": "PUT",
-        "path": "/api/v1.1/orders/{{runId}}-order"
+        "path": "/api/{{apiVersion}}/orders/ord-{{runId}}"
       },
       {
         "capabilityId": "goal_2_step_1",
         "method": "POST",
-        "path": "/api/v1.1/invoices"
+        "path": "/api/{{apiVersion}}/invoices"
       }
     ]
   },
@@ -56,12 +56,17 @@ const PROFILES: InstallationProfile[] = [
       {
         "capabilityId": "goal_1_step_2",
         "method": "POST",
-        "path": "/api/v1.1/orders/ord_{{runId}}"
+        "path": "/api/v1.1/orders/{{runId}}-order-{{now}}"
       },
       {
         "capabilityId": "goal_2_step_1",
         "method": "PUT",
-        "path": "/api/v1.1/invoices"
+        "path": "/api/{{apiVersion}}/invoices"
+      },
+      {
+        "capabilityId": "goal_3_step_1",
+        "method": "GET",
+        "path": "/api/v1.1/expenses/summary"
       }
     ]
   },
@@ -84,17 +89,12 @@ const PROFILES: InstallationProfile[] = [
       {
         "capabilityId": "goal_1_step_2",
         "method": "POST",
-        "path": "/api/v1.1/orders/{{runId}}-order-{{randomInt}}"
+        "path": "/api/v1.1/orders/{{runId}}-order"
       },
       {
         "capabilityId": "goal_2_step_1",
         "method": "PUT",
         "path": "/api/v1.1/invoices"
-      },
-      {
-        "capabilityId": "goal_2_step_2",
-        "method": "GET",
-        "path": "/api/v1.1/invoices/{{createdInvoiceId}}"
       },
       {
         "capabilityId": "goal_3_step_1",
@@ -117,17 +117,12 @@ const PROFILES: InstallationProfile[] = [
       {
         "capabilityId": "goal_1_step_2",
         "method": "PUT",
-        "path": "/api/v1.2/orders/{{runId}}-order-{{random}}"
+        "path": "/api/v1.2/orders/ord_{{runId}}"
       },
       {
         "capabilityId": "goal_2_step_1",
         "method": "POST",
         "path": "/api/v1.2/invoices"
-      },
-      {
-        "capabilityId": "goal_2_step_2",
-        "method": "GET",
-        "path": "/api/v1.2/invoices/{{createdInvoiceId}}"
       }
     ]
   },
@@ -145,7 +140,7 @@ const PROFILES: InstallationProfile[] = [
       {
         "capabilityId": "goal_1_step_2",
         "method": "PUT",
-        "path": "/api/v1.1/orders/{{runId}}-order-{{randomInt}}"
+        "path": "/api/v1.1/orders/{{runId}}-order"
       },
       {
         "capabilityId": "goal_2_step_1",

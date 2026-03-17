@@ -1,7 +1,7 @@
 {
   "profileId": "cust_a__v1.1__http://localhost:4011",
-  "createdAt": "2026-03-15T03:19:11.072Z",
-  "updatedAt": "2026-03-15T03:19:11.072Z",
+  "createdAt": "2026-03-17T04:58:41.896Z",
+  "updatedAt": "2026-03-17T04:58:41.896Z",
   "apiBaseUrl": "http://localhost:4011",
   "apiVersion": "v1.1",
   "customerId": "cust_a",
@@ -11,7 +11,7 @@
       "goalId": "goal_1",
       "goalText": "Create an order for customer cust_a with a single line item and read it back to confirm all fields",
       "method": "GET",
-      "path": "/api/v1.1/orders/template",
+      "path": "/api/{{apiVersion}}/orders/template",
       "successStatusCodes": [
         200
       ],
@@ -30,7 +30,7 @@
       "goalId": "goal_1",
       "goalText": "Create an order for customer cust_a with a single line item and read it back to confirm all fields",
       "method": "PUT",
-      "path": "/api/v1.1/orders/{{runId}}-order",
+      "path": "/api/{{apiVersion}}/orders/ord-{{runId}}",
       "successStatusCodes": [
         201
       ],
@@ -46,8 +46,7 @@
         "template_token"
       ],
       "prerequisitePaths": [
-        "/api/v1.1/orders/template",
-        "/api/v1.1/orders/{{runId}}-order"
+        "/api/{{apiVersion}}/orders/template"
       ],
       "confidence": 0.95
     },
@@ -56,7 +55,7 @@
       "goalId": "goal_2",
       "goalText": "Post a new invoice for customer cust_a and then retrieve it to confirm it was stored correctly",
       "method": "POST",
-      "path": "/api/v1.1/invoices",
+      "path": "/api/{{apiVersion}}/invoices",
       "successStatusCodes": [
         201
       ],

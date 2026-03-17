@@ -2,7 +2,7 @@
 export class LegacyApiClient_cust_b_v1_1_http_localhost_4011 {
   private readonly capabilityMap = {
     "goal_1_step_1": { method: "GET", path: "/api/v1.1/orders/template" },
-    "goal_1_step_2": { method: "PUT", path: "/api/v1.1/orders/{{runId}}-order-{{randomInt}}" },
+    "goal_1_step_2": { method: "PUT", path: "/api/v1.1/orders/{{runId}}-order" },
     "goal_2_step_1": { method: "POST", path: "/api/v1.1/invoices" },
     "goal_3_step_1": { method: "GET", path: "/api/v1.1/expenses/summary" }
   };
@@ -74,7 +74,7 @@ export class LegacyApiClient_cust_b_v1_1_http_localhost_4011 {
 
 
   async call_goal_1_step_2(request: { path?: string; headers?: Record<string, string>; body?: unknown } = {}): Promise<unknown> {
-    request.path = request.path ?? "/api/v1.1/orders/{{runId}}-order-{{randomInt}}";
+    request.path = request.path ?? "/api/v1.1/orders/{{runId}}-order";
     const response = await fetch(this.baseUrl + (request.path ?? ""), {
       method: "PUT",
       headers: { ...this.authHeader, ...(request.headers ?? {}) },

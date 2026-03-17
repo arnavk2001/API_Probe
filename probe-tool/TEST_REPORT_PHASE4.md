@@ -1,82 +1,83 @@
-# Phase 4 Test Report (XML + JSON Probing)
+# Full Blind Validation Report (2026-03-16)
 
 ## 1. Objective
 
-Validate that Phase 4 is correctly implemented by proving:
-1. Blind probing still adapts to undocumented JSON drift (server2).
-2. Blind probing adapts to undocumented XML drift (server3).
-3. XML responses are parsed into structured objects usable by extraction and validation.
-4. Full multi-scenario regression still passes.
+Validate end-to-end project behavior in one fresh blind run:
+1. No pre-learned profile knowledge before execution.
+2. Successful probing across baseline, JSON drift, XML drift, version upgrade, and multi-customer scenarios.
+3. Generated SDK correctness validation after probing.
+4. Evidence artifacts collected for reproducibility.
 
-## 2. Blind Testing Strategy Used
+## 2. Run Metadata
 
-For each drifted installation, run in blind mode with no prior learned profile:
-1. Delete installation profile cache.
-2. Probe using shared docs (same baseline docs/openapi).
-3. Set `MAX_PROBE_ATTEMPTS=3`.
-4. Expect first attempt failures due to drift.
-5. Expect adaptation and eventual success.
+1. Run timestamp: 2026-03-16 22:00:19 PDT
+2. Harness command: npm run phase3:test
+3. Working directory: probe-tool
 
-## 3. Executed Blind Runs
+## 3. Blind Preconditions (Verified)
 
-## 3.1 Server2 blind run (JSON drift)
+Before running the harness, the state was reset:
+1. Deleted profiles directory contents.
+2. Deleted generated-sdk directory contents.
+3. Deleted all probe-results-session_*.json files.
+4. Verified session file count before run was 0.
 
-Command:
-- `MAX_PROBE_ATTEMPTS=3 npm run probe -- --config=configs/cust_a_v11_server2.json --skip-sdk`
+This ensured server2 and server3 were unknown to the probe tool at run start.
 
-Evidence session:
-- `probe-results-session_1qrcxvxe.json`
+## 4. End-to-End Harness Result
 
-Result summary:
-1. Overall success: true
-2. Goal 1: first attempt failed, succeeded on attempt 2
-3. Goal 2: first attempt failed, succeeded on attempt 2
-4. Goal 3: first attempt failed, succeeded on attempt 3
+Harness completed successfully with all required scenarios:
+1. cust_a v1.1 on server1 (baseline)
+2. cust_a v1.1 on server2 (JSON drift)
+3. cust_a v1.1 on server3 (XML drift)
+4. cust_a v1.2 on server1 (upgrade)
+5. cust_b v1.1 on server1 (parallel customer)
 
-## 3.2 Server3 blind run (XML drift)
+Final harness status:
+1. Phase 3 validation succeeded.
+2. Sessions executed: 5.
+3. Unified SDK generated.
 
-Command:
-- `MAX_PROBE_ATTEMPTS=3 npm run probe -- --config=configs/cust_a_v11_server3.json --skip-sdk`
+## 5. Probe Session Evidence
 
-Evidence session:
-- `probe-results-session_nkdswxqk.json`
+Produced sessions from this run:
+1. probe-results-session_ey0x4te8.json | cust_a | v1.1 | http://localhost:4011 | overall=true | goals=3 | firstAttemptFailAllGoals=false
+2. probe-results-session_oj8rmtz0.json | cust_a | v1.1 | http://localhost:4012 | overall=true | goals=3 | firstAttemptFailAllGoals=true
+3. probe-results-session_zimxmj8u.json | cust_a | v1.1 | http://localhost:4013 | overall=true | goals=3 | firstAttemptFailAllGoals=true
+4. probe-results-session_xmu4xkhi.json | cust_a | v1.2 | http://localhost:4011 | overall=true | goals=3 | firstAttemptFailAllGoals=false
+5. probe-results-session_l1ks6xl0.json | cust_b | v1.1 | http://localhost:4011 | overall=true | goals=3 | firstAttemptFailAllGoals=false
 
-Result summary:
-1. Overall success: true
-2. Goal 1: first attempt failed, succeeded on attempt 2
-3. Goal 2: first attempt failed, succeeded on attempt 2
-4. Goal 3: first attempt failed, succeeded on attempt 3
+Blind drift condition was met as expected:
+1. Server2: first attempts failed for all goals, then adapted to success.
+2. Server3: first attempts failed for all goals, then adapted to success.
 
-## 4. XML Parsing Verification
+## 6. XML Handling Evidence (Server3)
 
-From `probe-results-session_nkdswxqk.json` step traces:
-1. XML responses were recorded as object bodies (not raw text strings).
-2. Parsed response keys include expected fields such as:
-   - `preflight_token`
-   - `template_token`
-   - `order_id`
-   - `invoice_ref`
-   - `error`, `message` for validation failures
-3. Goal-level validations succeeded for write-readback checks and read-only checks.
+From successful server3 session probe-results-session_zimxmj8u.json:
+1. successfulStepCount=7
+2. objectResponseBodies=7
+3. parsed response keys include: preflight_token, order_id, invoice_ref, required_fields, customer_id, currency_code, notes, line_items
 
-This demonstrates that XML normalization and extraction compatibility are working.
+This confirms XML responses were parsed and normalized into object form consumable by extraction and validation logic.
 
-## 5. Regression Harness Run
+## 7. SDK Correctness Evidence
 
-Command:
-- `npm run phase3:test`
+Integrated runtime SDK validation executed inside harness after generation:
+1. Profiles validated: 5
+2. Total passed: 20
+3. Total failed: 0
+4. Validator result: All replay-based SDK checks passed.
 
-Observed output:
-1. Harness completed all 5 scenarios.
-2. Final line: `Phase 3 validation succeeded.`
-3. Sessions executed: 5
-4. Unified SDK generated successfully.
+Generated SDK artifacts:
+1. generated-sdk/index.ts
+2. generated-sdk/cust_a/v1.1/client.ts
+3. generated-sdk/cust_a/v1.2/client.ts
+4. generated-sdk/cust_b/v1.1/client.ts
 
-## 6. Conclusion
+## 8. Conclusion
 
-Phase 4 implementation is validated.
-
-Pass conditions met:
-1. Blind strategy succeeds for server2 and server3 after expected first-attempt failures.
-2. XML responses are parsed and validated correctly.
-3. No regression in end-to-end matrix harness behavior.
+This run passed all required criteria for a full blind validation:
+1. Server2 and server3 behavior was discovered from scratch.
+2. Probe adapted to undocumented drift and completed all goals.
+3. XML and JSON responses were both handled correctly.
+4. Generated SDK was validated successfully in runtime checks.

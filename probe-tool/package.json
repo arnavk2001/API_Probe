@@ -6,7 +6,8 @@
     "scripts": {
         "build": "tsc -p tsconfig.json",
         "probe": "tsx src/cli.ts",
-        "phase3:test": "tsx src/testHarness.ts"
+        "phase3:test": "tsx src/testHarness.ts",
+        "sdk:test": "tsx -e \"import { validateGeneratedSdk } from './src/sdkRuntimeValidator'; validateGeneratedSdk().catch(err => { console.error(err); process.exit(1); })\""
     },
     "engines": {
         "node": ">=20"

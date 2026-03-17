@@ -27,6 +27,73 @@ For one probe run, the flow is:
 8. Compare with prior profile and emit drift report.
 9. Generate per-installation SDK and unified callable SDK.
 
+## System Architecture Diagram
+
+```mermaid
+flowchart TD
+    A[User runs probe CLI with config and goals] --> B[Load environment and inputs]
+    B --> C[Goal Parser<br/>Natural language goals to structured goals]
+    C --> D[Probe Orchestrator]
+
+    D --> E[Execution Engine<br/>Build and send HTTP requests]
+    E --> F{Legacy API installation}
+    F --> F1[Server1 baseline JSON]
+    F --> F2[Server2 drift JSON]
+    F --> F3[Server3 drift XML]
+
+    E --> G[Diagnostics Collector<br/>Request, response, errors]
+    E --> H[Validation Engine<br/>Read-back correctness checks]
+
+    H --> I{Goal succeeded?}
+    I -->|No| J[LLM-assisted repair<br/>Adjust plan and retry]
+    J --> E
+    I -->|Yes| K[Successful attempt trace]
+
+    K --> L[Discovery Engine<br/>Build capability profile from successful traces]
+    G --> L
+
+    L --> M[Profile Store<br/>Save installation profile]
+    M --> N[Drift Analyzer<br/>Compare previous vs current profile]
+
+    L --> O[SDK Generator<br/>Template-based TypeScript generation]
+    M --> O
+    O --> P[Generated per-profile clients]
+    O --> Q[Generated unified SDK index]
+
+    D --> R[Session Artifact<br/>probe-results JSON with attempts and summary]
+    N --> R
+    O --> R
+
+    S[Test Harness] --> T[Start fixture servers]
+    T --> U[Run scenario matrix]
+    U --> V[Assert probe success, drift behavior, profile files, SDK artifacts]
+    V --> W[Test reports]
+
+    classDef llm fill:#f7efe1,stroke:#8a6d3b,stroke-width:1px,color:#222;
+    classDef core fill:#e8f1fb,stroke:#2f5d8a,stroke-width:1px,color:#111;
+    classDef store fill:#eaf7ea,stroke:#3b7a3b,stroke-width:1px,color:#111;
+
+    class C,J llm;
+    class D,E,G,H,L,N,O,R core;
+    class M,P,Q,W store;
+```
+
+### Flow Explanation
+
+1. **Input & Parsing** (yellow): Goal parser and LLM-assisted repair convert natural-language goals into structured, executable steps.
+
+2. **Execution & Diagnostics** (blue): Execution engine sends HTTP calls to the legacy API, collecting request/response diagnostics and validation data.
+
+3. **Validation & Adaptation**: Validation engine checks outcomes. If a goal fails, LLM repair logic adjusts the plan and retries.
+
+4. **Discovery & Storage** (green): Successful traces are distilled into a capability profile and saved per installation. Profiles contain methods, paths, required fields, and confidence scores.
+
+5. **Drift Detection**: Drift analyzer compares current profile against previously saved profiles, highlighting additions, removals, and field-level changes.
+
+6. **SDK Generation**: SDK generator uses capability profiles as input data and applies fixed TypeScript templates to emit per-profile clients and a unified multi-profile SDK.
+
+7. **Test Harness**: Orchestrates full multi-scenario validation across customers, versions, and API installations.
+
 ## Repository Structure
 
 Key project folders:

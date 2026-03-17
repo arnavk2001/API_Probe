@@ -1,7 +1,7 @@
 {
   "profileId": "cust_a__v1.1__http://localhost:4012",
-  "createdAt": "2026-03-15T03:19:37.596Z",
-  "updatedAt": "2026-03-15T03:19:37.596Z",
+  "createdAt": "2026-03-17T04:59:09.774Z",
+  "updatedAt": "2026-03-17T04:59:09.774Z",
   "apiBaseUrl": "http://localhost:4012",
   "apiVersion": "v1.1",
   "customerId": "cust_a",
@@ -44,7 +44,8 @@
       "requiredBodyFields": [],
       "prerequisitePaths": [
         "/api/v1.1/orders/preflight",
-        "/api/v1.1/orders/template"
+        "/api/v1.1/orders/template",
+        "/api/v1.1/orders/{{runId}}-order-{{now}}"
       ],
       "confidence": 0.8999999999999999
     },
@@ -53,7 +54,7 @@
       "goalId": "goal_1",
       "goalText": "Create an order for customer cust_a with a single line item and read it back to confirm all fields",
       "method": "POST",
-      "path": "/api/v1.1/orders/ord_{{runId}}",
+      "path": "/api/v1.1/orders/{{runId}}-order-{{now}}",
       "successStatusCodes": [
         201
       ],
@@ -64,7 +65,6 @@
       "requiredQueryParams": [],
       "requiredBodyFields": [
         "commodity_code_id",
-        "currency",
         "customer_id",
         "line_items",
         "pickup_date",
@@ -72,7 +72,8 @@
       ],
       "prerequisitePaths": [
         "/api/v1.1/orders/preflight",
-        "/api/v1.1/orders/template"
+        "/api/v1.1/orders/template",
+        "/api/v1.1/orders/{{runId}}-order-{{now}}"
       ],
       "confidence": 0.8999999999999999
     },
@@ -81,7 +82,7 @@
       "goalId": "goal_2",
       "goalText": "Post a new invoice for customer cust_a and then retrieve it to confirm it was stored correctly",
       "method": "PUT",
-      "path": "/api/v1.1/invoices",
+      "path": "/api/{{apiVersion}}/invoices",
       "successStatusCodes": [
         201
       ],
@@ -98,6 +99,26 @@
       ],
       "prerequisitePaths": [],
       "confidence": 0.8999999999999999
+    },
+    {
+      "capabilityId": "goal_3_step_1",
+      "goalId": "goal_3",
+      "goalText": "Retrieve the end-of-month expense summary for customer cust_a for February 2026",
+      "method": "GET",
+      "path": "/api/v1.1/expenses/summary",
+      "successStatusCodes": [
+        200
+      ],
+      "requiredHeaders": [
+        "x-api-key"
+      ],
+      "requiredQueryParams": [
+        "customer_ref",
+        "period"
+      ],
+      "requiredBodyFields": [],
+      "prerequisitePaths": [],
+      "confidence": 0.85
     }
   ],
   "recentDiagnostics": [
